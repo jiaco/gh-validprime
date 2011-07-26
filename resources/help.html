@@ -1,0 +1,35 @@
+<h1>ValidPrime Help</h1>
+<p>ValidPrime consists of 4 steps that must be followed in order:</p>
+<p>The order is shown in the top toolbar, Load -> Check -> Run -> Save Files</p>
+<p>Elements of the interface that are not a part of the current step will be
+inactive to aid you in following the steps. You can use the Reload button to return to the load step,
+and the Recheck button to return to the configuration step.
+<p>Beware, when using ValidPrime for the first time or on a new file, you will <b>have to run Check twice</b>. This is because the selection of Rows and Columns to use a gDNA Samples and ValidPrime Assays cannot be chosen before check has been run at least once. Once the proper labels have been selected, Check needs to be re-run to obtain the concentrations in the dilution series and confirm that the parameters are valid for the input file.</p>
+
+
+<h2>Loading Input</h2>
+<p>Input files must be in Stepone or Fluidigm format. Spreadsheet and custom format are typically output from excel-type programs. At present only Fluidigm and Spreadsheet are functional.</p>
+<p>If you try to load a file in a format different from the format specified in the Input Format field, the program will likely crash. So do not do this.</p>
+
+<h2>Checking Input/Parameters</h2>
+<p>The LOD (Limit of Detection) is used to flag input values above a threshold. This parameter can seriously effect the number of A+ GOIs so ridiculous values should be avoided.</p>
+<p>In order to run ValidPrime, certian row and column labels must be selected to dictate where the 
+gDNA Sample columns are and where the ValidPrime Assay is in the input. This is why input must be loaded 
+prior to the Check step and the Check step needs to be run twice for a new input file. Loading the input gives ValidPrime the row and column labels to enable their selection in the 'Input Parameters' section.</p>
+<p>Once Check has been run and the gDNA Samples are properly input, if the gDNA concentrations are not in the row lables, you can enter them manually using the Check/Set [gDNA] button.</p>
+<p>If there are Rows (Samples) or Columns (Assays) you want ValidPrime to ingore, set them as well.</p>
+<p>When using a gDNA dilution series, the Delta-Cq refers to the difference between the CqNA for each dilution point between the VPA and the GOI. If there are more than Min-Count points, the Standard Deviation (SD) will be calculated and GOIs above the SD-Cutoff will be flagged as HIGHSD.</p>
+<p>If Check was successful, the Run button will become enabled and you can run ValidPrime.</p>
+
+<h2>Run ValidPrime</h2>
+<p>ValidPrime assigns Grades based on the %-DNA in each cell of the input grid. The defaults are 3% or less for an A, 25% or less for a B, and 50% or less for a C. Any cell in which the %-DNA is greater than or equal to the Grade C max will be flagged as HIGHDNA.</p>
+
+<h2>Viewing and Saving Results</h2>
+<p>Use the Generate Output Names button to create a series of output file names based on the input file. 
+Select any output files you want to create via the individual checkboxes. Upon clicking 'Save' each selected output file will be created.</p>
+<p>In order to merely view the results within ValidPrime, you can use the View menu to select the results 
+to view in a simple grid.The Toggle Grid button can be used to show different types of values in the main application grid as well.</p>
+<p>The ValidPrime scores can also be viewed in a HeatMap (experimental).</p>
+<!--
+<p></p>
+-->
