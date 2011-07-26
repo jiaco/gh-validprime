@@ -1034,11 +1034,13 @@ bool	VPStore::check_3()
 		//	3   3 "_78_gDNA 500" 
 		//
 		// no idea how this go so complex but this seems to be correct
-		_goiSummary[ goi ].gDnaOutlier = _inputRows.at(
-			_goiSummary[ goi ].gDnaIndexes[ 
+		if( minAt != UINT ) {
+			_goiSummary[ goi ].gDnaOutlier = _inputRows.at(
+		  	 _goiSummary[ goi ].gDnaIndexes[ 
 			   _goiSummary[ goi ].gDnaIndexes.indexOf( minAt )
 			]
-		);
+			);
+		}
 
 		if( allSd <= _cutHighAll || ( minAt != UINT && looSd <= _cutHighLoo ) ) {
 			_goiSummary[ goi ].confidence = VP::High;
@@ -1164,6 +1166,7 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	double	pctCalc;
 	double	cqNa;
 	QList<double>	cqDnaTab, cqRnaTab, pctTab, useable_cqDnaTab;
+	QString	grade;
 
 	CalcReport	calcReport;
 
@@ -1237,7 +1240,63 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 // pretty sure this is what is bugging Henrik right now
 // if LOWCONF does not get checked before HIGHDNA and it is likely that 
 // most LOWCONF are HIGHDNA too.
+	grade = vpScore( ridx, cidx );
+	
+	_data[ ridx ][ cidx ].setCqDNA( Mean<double>( cqDnaTab ) );
+	if( grade == VP::FLAG_A ) {
+		// CqRNA = INPUT
+		_data[ ridx ][ cidx ].setCqRNA( cqNa );
+		goto CALC_DONE;
+	} else if( grade == VP::FLAG_F ) {
+		// HIGHDNA
+		// CqRNA = ND
+		_data[ ridx ][ cidx ].setFlag( VP::HIGHDNA );
+		calcReport.mesg = "HIGHDNA";
+		goto CALC_DONE;
+	} else if( _goiSummary[ goi ]._flag == VP::LOWCONF ) {
+		// HIGHSD
+		// CqRNA = ND
+		_data[ ridx ][ cidx ].setFlag( VP::HIGHSD );
+		goto CALC_DONE;
+	}
+	// CqRNA = calculated value
+	{	// THIS SHOULD ONLY HAPPEN IF NOT GOTO CALC_DONE
 
+		foreach( double cqDna, cqDnaTab ) {
+			cqRna = Kubi( cqNa, cqDna );
+			if( cqRna > 0 ) {
+				cqRnaTab << cqRna;
+				useable_cqDnaTab << cqDna;
+			}
+		}
+		calcReport.cqRnaCount = cqRnaTab.size();
+		calcReport.cqRna = Mean<double>( cqRnaTab );
+		calcReport.cqRnaSd = SD<double>( cqRnaTab );
+		calcReport.cqRna1 = Kubi( cqNa, Mean<double>( useable_cqDnaTab ) );
+		calcReport.cqDnaCount2 = useable_cqDnaTab.size();
+		calcReport.cqDna2 = Mean<double>( useable_cqDnaTab );
+
+		if( cqRnaTab.size() == 0 ) {
+		//
+		// TODO make this a setError condition
+		// to make sure if it happens during testing
+			_data[ ridx ][ cidx ].setFlag( VP::K0 );
+			calcReport.mesg = "K0";
+			goto CALC_DONE;
+		} else if( cqRnaTab.size() == 1 ) {
+			_data[ ridx ][ cidx ].setCqDNA( useable_cqDnaTab.at( 0 ) );
+			_data[ ridx ][ cidx ].setCqRNA( cqRnaTab.at( 0 ) );
+			goto CALC_DONE;
+		} else {
+			_data[ ridx ][ cidx ].setCqDNA(
+			  Mean<double>( useable_cqDnaTab ) );
+			_data[ ridx ][ cidx ].setCqRNA(
+			  Mean<double>( cqRnaTab ) );
+			_data[ ridx ][ cidx ].setCqRNA1(
+			  Kubi( cqNa, Mean<double>( useable_cqDnaTab ) ) );
+		}
+	}	// END BAD WHITESPACE
+/*
 	if( pctCalc >= _gradeC ) {
 		// this is an F condition
 		//
@@ -1300,6 +1359,7 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 			  Kubi( cqNa, Mean<double>( useable_cqDnaTab ) ) );
 		}
 	}
+*/
 CALC_DONE:;
 	if( calcReport.mesg == "CALC" ) {
 		_data[ ridx ][ cidx ].confirmCqNA();
@@ -1521,6 +1581,7 @@ void	VPStore::setInput( const QString& rowname, const QString& colname,
 
 bool	VPStore::load()
 {
+	bool	rv = false;
 	//
 	// common code for all input formats
 	//
@@ -1529,7 +1590,7 @@ bool	VPStore::load()
 	QString	buf = Ifp::load( _inputFile );
 	if( buf.size() == 0 || buf == USTR ) {
 		setCritical( "Empty or invalid input file" );
-		return( false );
+		return( rv );
 	}
 	QStringList	lines = buf.split( "\n", QString::KeepEmptyParts );
 	for( int i = 0; i < lines.size(); ++i ) {
@@ -1539,11 +1600,16 @@ bool	VPStore::load()
 		}
 	}
 	if( _inputFormat == VP::FLUID ) {
-		return( parseFluidigm( lines ) );
+		rv = parseFluidigm( lines );
+	} else if( _inputFormat == VP::STEPONE ) {
+		rv = parseStepone( lines );
+	} else if( _inputFormat == VP::CUSTOM ) {
+		// need those pesky parameters
+		//rv = parseSpreadsheet( lines );
 	} else if( _inputFormat == VP::SIMPLE ) {
-		return( parseSpreadsheet( lines ) );
+		rv = parseSpreadsheet( lines );
 	}
-	return( false );
+	return( rv );
 }
 bool	VPStore::parseFluidigm( const QStringList& lines )
 {
@@ -1561,10 +1627,11 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
         for( ; lnum < lines.size() && lines.at( lnum ).isEmpty(); ++lnum ) {
         }
         ++lnum;
-        if( lines.at( lnum ).endsWith( "Ct" ) ) {
+        if( lnum < lines.size() && lines.at( lnum ).endsWith( "Ct" ) ) {
                 ++lnum;
         }
         if( lnum >= lines.size() ) {
+		setCritical( "Fluidigm parser failed to parse input file" );
                 return( false );
         }
         ++lnum;
@@ -1621,6 +1688,90 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
 			}
                 }
         }
+	return( true );
+}
+bool	VPStore::parseStepone( const QStringList& lines )
+{
+	int	lnum = 0;
+	const int	CtCol = 6;
+	const QString	STEPONE_NOAMP_FLAG = "undetermined";
+
+	QStringList	tokens;
+	Row		row;
+	int	dataStart = UINT;
+
+	for( ; lnum < lines.size() && !lines.at( lnum ).isEmpty(); ++lnum ) {
+		;	// used to capture the header
+	}
+	for( ; lnum < lines.size() && lines.at( lnum ).isEmpty(); ++lnum ) {
+		;	// skip empty lines after header
+	}
+	if( lnum >= lines.size() ) {
+		return( false );
+	}
+	tokens = lines.at( lnum ).split( "\t" );
+	row.setSeparator( "\t" );
+	if( tokens.size() < CtCol ) {
+		return( false );
+	}
+	tokens[ CtCol ] = "CT";	
+	row.attachHeader( tokens );
+	++lnum;
+	dataStart = lnum;
+	int	rowSize = 0;
+	int	colSize = 0;
+	for( ; lnum < lines.size(); ++lnum ) {
+		row.split( lines.at( lnum ) );
+		QString	well = S( row[ "Well" ] );
+		QChar	colCh = well.at( 0 );
+		// let both be 1-based
+		int	colInt = well.mid( 1 ).toInt();
+		int	rowInt = ( colCh.toAscii() - 'A' ) + 1;
+
+		if( rowInt > rowSize ) {
+			rowSize = rowInt;
+		}
+		if( colInt > colSize ) {
+			colSize = colInt;
+		}
+		if( !_inputRows.contains( S( row[ "Sample Name" ] ) ) ) {
+			_inputRows << S( row[ "Sample Name" ] );
+		}
+		if( !_inputCols.contains( S( row[ "Target Name" ] ) ) ) {
+			_inputCols << S( row[ "Target Name" ] );
+		}
+	}
+	colSize -= 1;
+	rowSize -= 1;
+	if( colSize > _inputCols.size() ) {
+		for( int x = 0; x < ( colSize - _inputCols.size() ); ++x ) {
+			_inputCols << QString( "UnusedTarget%1" ).arg( x + 1 );
+		}
+	}
+	if( rowSize > _inputRows.size() ) {
+		for( int x = 0; x < ( rowSize - _inputRows.size() ); ++x ) {
+			_inputRows << QString( "UnusedSample%1" ).arg( x + 1 );
+		}
+	}
+	if( !newData() ) {
+		return( false );
+	}
+	for( lnum = dataStart; lnum < lines.size(); ++lnum ) {
+		row.split( lines.at( lnum ) );
+		int ridx = rowIndex( S( row[ "Sample Name" ] ) );
+		int cidx = colIndex( S( row[ "Target Name" ] ) );
+		if( S( row[ "CT" ] ).isEmpty() ) {
+			_data[ ridx ][ cidx ].setFlag( VP::EXPFAIL );
+			_data[ ridx ][ cidx ].setInputFlagged();
+			continue;
+		}
+		if( S( row[ "CT" ] ).toLower() == STEPONE_NOAMP_FLAG ) {
+			_data[ ridx ][ cidx ].setFlag( VP::NOAMP );
+			_data[ ridx ][ cidx ].setInputFlagged();
+			continue;
+		}
+		_data[ ridx ][ cidx ].setInput( D( row[ "CT" ] ) );
+	}
 	return( true );
 }
 bool	VPStore::parseSpreadsheet( const QStringList& lines )
@@ -1962,8 +2113,6 @@ QList<Row>	VPStore::outputData( const VP::DataRole& role ) const
 	}
 	return( rv );
 }
-
-
 
 QString		VPStore::vpScore( const int& ridx, const int& cidx ) const
 {

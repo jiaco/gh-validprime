@@ -138,6 +138,7 @@ public:
 	bool	run();
 
 	bool	parseFluidigm( const QStringList& lines );
+	bool	parseStepone( const QStringList& lines );
 	bool	parseSpreadsheet( const QStringList& lines );
 	void	debugLoad( QTextStream& fp );
 	void	debugCheck( QTextStream& fp );
