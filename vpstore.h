@@ -239,6 +239,9 @@ private:
 	int		_minCountSdNa;
 	double		_cutoffSdNa;
 
+	double		_cutHighAll, _cutHighLoo,
+			_cutMedAll, _cutMedLoo;
+
 	QStringList	_validSamples, _astarSamples, _failSamples;
 
 	//

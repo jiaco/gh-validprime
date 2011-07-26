@@ -50,6 +50,13 @@ namespace	GH
 
 	connect( _myApp, SIGNAL( setState( VP::State ) ),
 	 this, SLOT( setState( VP::State ) ) );
+
+	// from GH::MainWindow
+
+	resetDefaultsAction()->setShortcut( QKeySequence( tr( "Ctrl+D" ) ) );
+	resetDefaultsAction()->setToolTip( "Set all parameters to default settings" );
+
+	ActionView::Action( this, "Help" )->setShortcut( QKeySequence( QKeySequence::HelpContents ) );
 }
 void	Window::centralGridClicked( const QVariant& row, const QVariant& column )
 {
@@ -97,8 +104,8 @@ void	Window::setState( const VP::State& state )
 			emit( statusMessage( "PostCheck" ) );
 			if( !postcheck() ) {
 				setState( VP::Check );
-			} else {
-				setState( VP::Run );
+			//} else {
+			//	setState( VP::Run );
 			}
 			break;
 		case	VP::Run:
@@ -225,6 +232,8 @@ void	Window::setupActionToolBar()
 	_actionToolBar->addWidget( _gridDisplayed );
 	_actionToolBar->addSeparator();
 	_actionToolBar->addAction( ActionView::Action( this, "Help" ) );
+
+	_actionToolBar->addAction( resetDefaultsAction() );
 }
 void	Window::setupMenu()
 {

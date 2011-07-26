@@ -15,9 +15,13 @@ namespace	GH
 	QString	debugRows = "_75_gDNA 10000,_76_gDNA 5000,_77_gDNA 2500,_78_gDNA 500,_79_gDNA 50,_80_gDNA 5";
 
 	//	LOAD
-	_loadParams << "InputFile" << "InputFormat";
+	_loadParams << "InputFile" << "InputFormat" << "GridFont";
 
-	addParam( "InputFile", "debug.input",
+	addParam( "GridFont", "",
+	 ParamModel::Font,
+	 tr( "Table Font" ) );
+
+	addParam( "InputFile", "",
 	 ParamModel::File,
 	 tr( "Input File"  ) );
 	addParam( "InputFormat", VP::FLUID,
@@ -69,6 +73,14 @@ namespace	GH
 	 ParamModel::Edit, "Delta-Cq Min-Count" );
 	addParam( "CutoffSdNa", "0.3", 
 	 ParamModel::Edit, "Delta-Cq SD-Cutoff" );
+	addParam( "CutHighAll", "0.3",
+	 ParamModel::Edit, "High All-SD Limit" );
+	addParam( "CutHighLoo", "0.2",
+	 ParamModel::Edit, "High LOO-SD Limit" );
+	addParam( "CutMedAll", "0.45",
+	 ParamModel::Edit, "Medium All-SD Limit" );
+	addParam( "CutMedLoo", "0.3",
+	 ParamModel::Edit, "Medium LOO-SD Limit" );
 
 	//	RUN
 	_runParams << "GradeA" << "GradeB"
@@ -85,6 +97,7 @@ namespace	GH
 	addParam( "GradeC", "50",
 	 ParamModel::Edit,
 	 tr( "Grade C max" ) );
+
 /*
 	addParam( "MinCountSdRna", "3", 
 	 ParamModel::Edit, "Delta-CqRNA Min-Count" );

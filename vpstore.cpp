@@ -497,6 +497,11 @@ bool	VPStore::precheck( CliApp* app )
 // second _cutoff for looSd
 	_minCountSdNa = I( app->param( "MinCountSdNa" )->value() );
 	_cutoffSdNa = D( app->param( "CutoffSdNa" )->value() );
+
+	_cutHighAll = D( app->param( "CutHighAll" )->value() );
+	_cutHighLoo = D( app->param( "CutHighLoo" )->value() );
+	_cutMedAll = D( app->param( "CutMedAll" )->value() );
+	_cutMedLoo = D( app->param( "CutMedLoo" )->value() );
 	return( true );
 }
 QStringList	VPStore::gDnaConcLabels() const
@@ -979,6 +984,9 @@ bool	VPStore::check_3()
 	// Now get SD for deltaNA (VPA versus GOI)
 	//
 	foreach( QString goi, _goiSummary.keys() ) {
+		//
+		// SKIP THE A+, A++, and A+++ cases
+		//
 		switch( _goiSummary[ goi ]._flag ) {
 			case	VP::APLUS3:
 			case	VP::APLUS2:
@@ -987,7 +995,15 @@ bool	VPStore::check_3()
 				break;
 			default:
 				break;
-		}	
+		}
+		// allSd requires a certain number of gDna Indexes
+		// and looSd required 4 indexes
+		//
+		int	cidx = colIndex( goi );
+		double	allSd = 0;	
+		double	looSd = 0;
+		int	minAt = UINT;
+		
 		if( _goiSummary[ goi ].gDnaIndexes.size() < _minCountSdNa ) {
 			_goiSummary[ goi ].confidence = VP::Low;
 			_goiSummary[ goi ]._flag = VP::LOWCONF;
@@ -998,14 +1014,15 @@ bool	VPStore::check_3()
 			 .arg( _gDnaVpaRowIndexes.size() ) );
 			continue;
 		}
-		int	minAt = UINT;
-		int	cidx = colIndex( goi );
-		double	allSd = getSd( _goiSummary[ goi ].gDnaIndexes, cidx );
+		allSd = getSd( _goiSummary[ goi ].gDnaIndexes, cidx );
 // TODO looSd only calculated if n >= 3
 // set a default, flag, unused value
 //
-		double	looSd = getSdLoo( _goiSummary[ goi ].gDnaIndexes, &minAt, cidx );
-
+			// TODO Hardwired 4 for now, should it be _minCountSdNa + 1?
+			//
+		if( _goiSummary[ goi ].gDnaIndexes.size() >= 4 ) {
+			looSd = getSdLoo( _goiSummary[ goi ].gDnaIndexes, &minAt, cidx );
+		}
 		_goiSummary[ goi ].allSd = allSd;
 		_goiSummary[ goi ].looSd = looSd;
 		// for a GOI with 4 gDnaIndexes:
@@ -1018,10 +1035,19 @@ bool	VPStore::check_3()
 		//
 		// no idea how this go so complex but this seems to be correct
 		_goiSummary[ goi ].gDnaOutlier = _inputRows.at(
-_goiSummary[ goi ].gDnaIndexes[ _goiSummary[ goi ].gDnaIndexes.indexOf( minAt ) ] );
+			_goiSummary[ goi ].gDnaIndexes[ 
+			   _goiSummary[ goi ].gDnaIndexes.indexOf( minAt )
+			]
+		);
 
+		if( allSd <= _cutHighAll || ( minAt != UINT && looSd <= _cutHighLoo ) ) {
+			_goiSummary[ goi ].confidence = VP::High;
+		} else if( allSd <= _cutMedAll || ( minAt != UINT && looSd <= _cutMedLoo ) ) {
+			_goiSummary[ goi ].confidence = VP::Med;
+		}
 	//	Low-Confidence will be a GOI_global flag and no calculations
 	//	will be made down the entire GOI-column.
+	//	TODO, not true anymore, want different behavior for A, versus B C F
 
 // TODO
 // need a second _cutoff for Loo-Sd
