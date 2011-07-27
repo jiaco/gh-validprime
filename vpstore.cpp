@@ -285,6 +285,14 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 		return( input() );
 	}
 	switch( _flag ) {
+	// TODO add this case:
+	//	case	VP::FLAG_AA3:
+	//	case	VP::FLAG_AA2:
+	//	case	VP::FLAG_AA:
+	//	role is CqRNA want CqNA
+	//	        CqDNA want flagstring
+	//		%DNA want flagstring
+	//		break;
 		case	VP::NADA:
 			switch( role ) {
 				case	VP::Input:

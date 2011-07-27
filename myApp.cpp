@@ -17,10 +17,14 @@ namespace	GH
 	//	LOAD
 	_loadParams << "InputFile" << "InputFormat" << "GridFont";
 
+	// TODO this is not really used, just to test
 	addParam( "GridFont", "",
 	 ParamModel::Font,
 	 tr( "Table Font" ) );
 
+	// load/file
+	// load/format
+	// load/action
 	addParam( "InputFile", "",
 	 ParamModel::File,
 	 tr( "Input File"  ) );

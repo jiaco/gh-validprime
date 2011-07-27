@@ -54,11 +54,14 @@ namespace	GH
 	// from GH::MainWindow
 
 	resetDefaultsAction()->setShortcut( QKeySequence( tr( "Ctrl+D" ) ) );
-	resetDefaultsAction()->setToolTip( "Set all parameters to default settings" );
+	resetDefaultsAction()->setToolTip(
+	 "Set all parameters to default settings" );
 
-	ActionView::Action( this, "Help" )->setShortcut( QKeySequence( QKeySequence::HelpContents ) );
+	ActionView::Action( this, "Help" )->setShortcut(
+	 QKeySequence( QKeySequence::HelpContents ) );
 }
-void	Window::centralGridClicked( const QVariant& row, const QVariant& column )
+void	Window::centralGridClicked(
+	 const QVariant& row, const QVariant& column )
 {
 	emit(
 	 statusMessage(

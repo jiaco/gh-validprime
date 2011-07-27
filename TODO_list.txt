@@ -1,0 +1,22 @@
+0)	Bug, if the postcheck() popup is so big, you cannot see buttons
+	closing the dialog with the X puts the app into postcheck state
+	which is a dead end
+
+	Need a checkbox to ask use if assays are validated
+		if yes, then give up on ZERO confidence for gDNA indexes < N
+		as we dont care, just get data
+
+	checkbox in Check and if not-checked and not at least 3 gDNA then warn
+	and send back to Check
+
+1) get params to be keyed : load/inputfile load/inputformat
+ and then use that _myApp->paramNames( "load" );
+
+2) get advanced run params in place and in GUI
+
+3) stop putting _#_ in front of samples and put (rlabel-Row%1) only if duplicate
+
+4) fix all crashes when loading from wrong format and figure out what
+ kind of code is just seqfaulting
+
+5) add colors and heat map preferences
