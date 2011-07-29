@@ -454,9 +454,6 @@ bool	MyApp::save()
 				role = VP::CqRna;
 				writeData( fp, role, false );
 				fp << endl;
-				role = VP::CqRna1;
-				writeData( fp, role, false );
-				fp << endl;
 				role = VP::CqDna;
 				writeData( fp, role, false );
 				fp << endl;

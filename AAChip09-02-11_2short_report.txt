@@ -1,0 +1,22 @@
+VP Report
+ValidPrime Version: v.0.9.1
+Input file: H:/jiaco/Dropbox/VP-tests/AAChip09-02-11_2short.txt
+Input format: Fluidigm
+Date/Time: Jul 29 2011 16:59
+VPAssay: m1qB_2
+Valid gDNA rows: _80_gDNA 5 _79_gDNA 50 _78_gDNA 500 _77_gDNA 2500 _76_gDNA 5000 _75_gDNA 10000
+gDNA concentrations: 5 50 500 2500 5000 10000
+LinReg all-gDNA: slope -3.0489; Eff 112.808; R2 0.99842
+LinReg VPA-gDNA: slope -3.0489; Eff 112.808; R2 0.99842
+ValidateAssays: true
+LOD: 40
+DeltaCq Min Count: 3
+DeltaCq AllSD Cutoff: 0.3
+DeltaCq LooSD Cutoff: 0.2
+Grade A: 3
+Grade B: 25
+Grade C: 50
+
+GOI	Sample	Note	CqInput	CqDNA Count	CqDNA	PctDNA	CqDNA Count-2	CqDNA-2	CqRNA Count	CqRNA	CqRNA-SD
+
+id1	_89_RT1, DNaseplus10000	CALC	15.4964	5	17.207	30.5525	5	17.207	5	16.0299	0.0891697

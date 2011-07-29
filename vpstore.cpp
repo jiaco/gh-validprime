@@ -35,6 +35,7 @@ GoiSummary::GoiSummary()
 	goi = "ERROR";
 	gDnaIndexes.clear();
 	_flag = VP::CALC;
+	// changing confidence to high versus low
 	confidence = VP::NotUsed;
 	allSd = looSd = 0.0;
 	gDnaOutlier = "ND";
@@ -46,7 +47,7 @@ void	GoiSummary::ShowHeader( QTextStream& fp )
 	 "GOI,gDNA Index Count,Flag,Confidence,All Sd,LOO Sd,gDNA Outlier"
 	 ",Slope,Eff,R2"
 	// ",nA+++,nA++,nA+,HIGHSD"
- 	 ",nA*,nA,nB,nC,nF,nHIGHDNA,nK0,nND"
+ 	 ",nA*,nA,nB,nC,nF,nK0,nND"
 	 ).split( "," );
 
 	fp << hdr.join( "\t" ) << endl;
@@ -198,9 +199,11 @@ void	VPStore::showGoiSummarySummary( QTextStream& fp )
 			case	VP::APLUS:
 				aplus << goi;
 				break;
+/*
 			case	VP::LOWCONF:
 				highsd << goi;
 				break;
+*/
 			default:
 				break;
 		}
@@ -208,13 +211,15 @@ void	VPStore::showGoiSummarySummary( QTextStream& fp )
 			case	VP::High:
 				high << goi;
 				break;
+/*
 			case	VP::Med:
 				med << goi;
 				break;
+*/
 			case	VP::Low:
-				if( _goiSummary[ goi ]._flag != VP::LOWCONF ) {
+				//if( _goiSummary[ goi ]._flag != VP::LOWCONF ) {
 					low << goi;
-				}
+			//	}
 				break;
 			default:
 				break;
@@ -226,14 +231,14 @@ void	VPStore::showGoiSummarySummary( QTextStream& fp )
 	fp << "A+\t" << aplus.size() << "\t" << aplus.join( "," ) << endl;
 	fp << "HighSD\t" << highsd.size() << "\t" << highsd.join( "," ) << endl;
 	fp << "HighConfidence\t" << high.size() << "\t" << high.join( "," ) << endl;
-	fp << "MedConfidence\t" << med.size() << "\t" << med.join( "," ) << endl;
+	//fp << "MedConfidence\t" << med.size() << "\t" << med.join( "," ) << endl;
 	fp << "LowConfidence\t" << low.size() << "\t" << low.join( "," ) << endl;
 }
 	CalcReport::CalcReport()
 {
 	goi = sample = mesg = "";
 	cqDnaCount = cqDnaCount2 = cqRnaCount = 0;
-	cqInput = cqDna = pctDna = cqDna2 = cqRna = cqRnaSd = cqRna1 = 0.0;
+	cqInput = cqDna = pctDna = cqDna2 = cqRna = cqRnaSd = 0.0;
 }
 void	CalcReport::ShowHeader( QTextStream& fp )
 {
@@ -241,7 +246,7 @@ void	CalcReport::ShowHeader( QTextStream& fp )
 		"GOI,Sample,Note"
 		",CqInput"
 		",CqDNA Count,CqDNA,PctDNA"
-		",CqDNA Count-2,CqDNA-2,CqRNA Count,CqRNA,CqRNA-SD,CqRNA1"
+		",CqDNA Count-2,CqDNA-2,CqRNA Count,CqRNA,CqRNA-SD"
 	).split( "," );
 	fp << hdr.join( "\t" ) << endl;
 }
@@ -259,7 +264,6 @@ void	CalcReport::show( QTextStream& fp )
 	 << "\t" << cqRnaCount
 	 << "\t" << cqRna
 	 << "\t" << cqRnaSd
-	 << "\t" << cqRna1
 	<< endl;
 }
 
@@ -268,7 +272,8 @@ void	CalcReport::show( QTextStream& fp )
 	_flag = VP::NADA;
 	_inputFlagged = false;
 	_input = QVariant();
-	_cqNA = _cqDNA = _cqRNA = _cqRNA1 = _pctDNA = VP::FLAG;
+	_cqNA = _cqDNA = _cqRNA = _pctDNA = VP::FLAG;
+	_grade = "";
 }
 VP::Flag	VPCell::flag() const
 {
@@ -280,6 +285,100 @@ QString	VPCell::flagString() const
 }
 QVariant	VPCell::data( const VP::DataRole& role ) const
 {
+	switch( role ) {
+		case	VP::Input:
+		case	VP::InOut:
+			return( input() );
+			break;
+		case	VP::Working:
+			switch( _flag ) {
+				case	VP::NADA:
+					return( input() );
+					break;
+				default:
+					return( V( flagString() ) );
+					break;
+			}
+			break;
+		case	VP::CqRna:
+			if( _grade == VP::FLAG_A ) {
+				return( cqNA() );
+				break;
+			} else if( _grade == VP::FLAG_F ) {
+				return( V( VP::FLAG_HIGHDNA ) );
+			}
+			switch( _flag ) {
+				case	VP::AA3:
+				case	VP::AA2:
+				case	VP::AA:
+				case	VP::ASTAR:
+					return( cqNA() );
+					break;
+				case	VP::EXPFAIL:
+				case	VP::NOAMP:
+				case	VP::OVERLOD:
+				case	VP::HIGHSD:
+					return( V( flagString() ) );
+					break;
+				default:
+					return( cqRNA() );
+					break;
+			}
+			break;
+		case	VP::CqDna:
+			switch( _flag ) {
+				case	VP::AA3:
+				case	VP::AA2:
+				case	VP::AA:
+				case	VP::ASTAR:
+					return( V( "NA" ) );
+					break;
+				case	VP::EXPFAIL:
+				case	VP::NOAMP:
+				case	VP::OVERLOD:
+					return( V( flagString() ) );
+					break;
+				default:
+					return( VP::VD( cqDNA() ) );
+					break;
+			}
+			break;
+		case	VP::PctDna:
+			switch( _flag ) {
+				case	VP::AA3:
+				case	VP::AA2:
+				case	VP::AA:
+				case	VP::ASTAR:
+					return( V( "NA" ) );
+					break;
+				case	VP::EXPFAIL:
+				case	VP::NOAMP:
+				case	VP::OVERLOD:
+					return( V( flagString() ) );
+					break;
+				default:
+					return( VP::VD( pctDNA() ) );
+					break;
+			}
+			break;
+		case	VP::Score:
+			switch( _flag ) {
+				case	VP::EXPFAIL:
+				case	VP::NOAMP:
+				case	VP::OVERLOD:
+					return( V( flagString() ) );
+					break;
+				default:
+					return( V( _grade ) );
+					break;
+			}
+			break;
+		// WHAT ABOUT CASE VP::CalcNa:
+
+		default:
+			break;
+	}
+/*
 	// have to override the flagging here to get the actual input
 	if( role == VP::Input  || role == VP::InOut) {
 		return( input() );
@@ -302,9 +401,6 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 					break;
 				case	VP::CqRna:
 					return( cqRNA() );
-					break;
-				case	VP::CqRna1:
-					return( cqRNA1() );
 					break;
 				case	VP::CqDna:
 					return( cqDNA() );
@@ -340,7 +436,6 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 					return( QVariant() );
 					break;
 				case	VP::CqRna:
-				case	VP::CqRna1:
 					return( V( flagString() ) );
 					break;
 			}
@@ -357,7 +452,6 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 					return( pctDNA() );
 					break;
 				case	VP::CqRna:
-				case	VP::CqRna1:
 				case	VP::CqDna:
 				case	VP::CalcNa:
 					return( V( flagString() ) );
@@ -371,6 +465,7 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 			return( V( flagString() ) );
 			break;
 	}
+*/
 	return( QVariant() );
 }
 QVariant	VPCell::input() const
@@ -401,18 +496,20 @@ double	VPCell::pctDNA() const
 {
 	double rv = _pctDNA;
 
-	if( rv > 100 ) {
+	if( rv == VP::FLAG ) {	// 999 or default, never set state
+		rv = 0;
+	} else if( rv > 100 ) {
 		rv = 100;
 	}
 	return( rv );
 }
+QString	VPCell::grade() const
+{
+	return( _grade );
+}
 double	VPCell::cqRNA() const
 {
 	return( _cqRNA );
-}
-double	VPCell::cqRNA1() const
-{
-	return( _cqRNA1 );
 }
 void	VPCell::setFlag( const VP::Flag& flag )
 {
@@ -434,13 +531,13 @@ void	VPCell::setPctDNA( const double& value )
 {
 	_pctDNA = value;
 }
+void	VPCell::setGrade( const QString& value )
+{
+	_grade = value;
+}
 void	VPCell::setCqRNA( const double& value )
 {
 	_cqRNA = value;
-}
-void	VPCell::setCqRNA1( const double& value )
-{
-	_cqRNA1 = value;
 }
 
 	VPStore::VPStore()
@@ -1022,6 +1119,8 @@ bool	VPStore::check_3()
 		//
 		// SKIP THE A+, A++, and A+++ cases
 		//
+		// default confidence is NotUsed (A+++/A++/A+)
+		//
 		switch( _goiSummary[ goi ]._flag ) {
 			case	VP::APLUS3:
 			case	VP::APLUS2:
@@ -1041,7 +1140,7 @@ bool	VPStore::check_3()
 		
 		if( _goiSummary[ goi ].gDnaIndexes.size() < _minSdCount ) {
 			_goiSummary[ goi ].confidence = VP::Low;
-			_goiSummary[ goi ]._flag = VP::LOWCONF;
+			//_goiSummary[ goi ]._flag = VP::LOWCONF;
 			++nLow;
 			_checkMessage.append(
 			 QString( "%1 has ZERO confidence %2 out of %3 gDna Indexes\n" )
@@ -1078,7 +1177,7 @@ bool	VPStore::check_3()
 			++nHigh;
 		} else {
 			_goiSummary[ goi ].confidence = VP::Low;
-			_goiSummary[ goi ]._flag = VP::LOWCONF;
+			//_goiSummary[ goi ]._flag = VP::LOWCONF;
 			++nLow;
 		}
 		if( minAt != UINT && looSd < allSd ) {
@@ -1231,7 +1330,7 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	double	pctCalc;
 	double	cqNa;
 	QList<double>	cqDnaTab, cqRnaTab, pctTab, useable_cqDnaTab;
-	QString	grade;
+	//QString	grade;
 
 	CalcReport	calcReport;
 
@@ -1295,23 +1394,83 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	pctCalc = PctDna( cqNa, Mean<double>( cqDnaTab ) ) * 100;
 	rv = true;
 	//	PERCENT NOW STORED BY DEFAULT
+	//	GRADE IS SET SIMULTANEOUSLY
+	//
 	_data[ridx][cidx].setPctDNA( pctCalc );
+	_data[ridx][cidx].setCqDNA( Mean<double>( cqDnaTab ) );
+	_data[ridx][cidx].setGrade( vpScore( ridx, cidx ) );
 
 	calcReport.cqDnaCount = cqDnaTab.size();
 	calcReport.cqDna = Mean<double>( cqDnaTab );
 	calcReport.pctDna = _data[ridx][cidx].pctDNA();
 
-	grade = vpScore( ridx, cidx );
+	// First test has to be for grade A
+	//
+	if( _data[ ridx ][ cidx ].grade() == VP::FLAG_A ) {
+		calcReport.mesg = "NOCALC";
+		// GRADE A WILL OUTPUT CqNA
+		goto CALC_DONE;
+	}
+	// Second test has to be for grade F
+	//
+	if( _data[ ridx ][ cidx ].grade() == VP::FLAG_F ) {
+		calcReport.mesg = "NOCALC";
+		// GRADE F will output HIGHDNA
+		goto CALC_DONE;
+	}
+	//if( _goiSummary[ goi ]._flag == VP::LOWCONF ) {
+	if( _goiSummary[ goi ].confidence == VP::Low ) {
+		calcReport.mesg = "NOCALC";
+		// WE ARE ONLY HERE FOR GRADE B AND C
+		_data[ ridx ][ cidx ].setFlag( VP::HIGHSD );
+		goto CALC_DONE;
+	}
+	// ONLY GET HERE IF GRADE B or C and HIGHCONF
+	//
+	foreach( double cqDna, cqDnaTab ) {
+		cqRna = Kubi( cqNa, cqDna );
+		if( cqRna > 0 ) {
+			cqRnaTab << cqRna;
+			useable_cqDnaTab << cqDna;
+		}
+	}
+	calcReport.mesg = "CALC";
+	calcReport.cqRnaCount = cqRnaTab.size();
+	calcReport.cqRna = Mean<double>( cqRnaTab );
+	calcReport.cqRnaSd = SD<double>( cqRnaTab );
+	calcReport.cqDnaCount2 = useable_cqDnaTab.size();
+	calcReport.cqDna2 = Mean<double>( useable_cqDnaTab );
+
+	if( cqRnaTab.size() == 0 ) {
+		//
+		// TODO make this a setError condition
+		// to make sure if it happens during testing
+		_data[ ridx ][ cidx ].setFlag( VP::K0 );
+		calcReport.mesg = "K0";
+		goto CALC_DONE;
+	} else if( cqRnaTab.size() == 1 ) {
+		_data[ ridx ][ cidx ].setCqDNA( useable_cqDnaTab.at( 0 ) );
+		_data[ ridx ][ cidx ].setCqRNA( cqRnaTab.at( 0 ) );
+		goto CALC_DONE;
+	} else {
+		_data[ ridx ][ cidx ].setCqDNA(
+		  Mean<double>( useable_cqDnaTab ) );
+		_data[ ridx ][ cidx ].setCqRNA(
+		  Mean<double>( cqRnaTab ) );
+	}
+
+	/*grade = vpScore( ridx, cidx );
 	
 	_data[ ridx ][ cidx ].setCqDNA( Mean<double>( cqDnaTab ) );
 	if( grade == VP::FLAG_A ) {
 		// CqRNA = INPUT
-		_data[ ridx ][ cidx ].setCqRNA( cqNa );
+		//_data[ ridx ][ cidx ].setCqRNA( cqNa );
+		// cqNA() is output, no need to store the value
 		goto CALC_DONE;
 	} else if( grade == VP::FLAG_F ) {
-		// HIGHDNA
+		// HIGHDNA is an output only in CqRNA flag, no need to do anything here
 		// CqRNA = ND
-		_data[ ridx ][ cidx ].setFlag( VP::HIGHDNA );
+		//_data[ ridx ][ cidx ].setFlag( VP::HIGHDNA );
 		calcReport.mesg = "HIGHDNA";
 		goto CALC_DONE;
 	} else if( _goiSummary[ goi ]._flag == VP::LOWCONF ) {
@@ -1322,7 +1481,8 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 		_data[ ridx ][ cidx ].setFlag( VP::HIGHSD );
 		goto CALC_DONE;
 	}
-	// CqRNA = calculated value
+	*/
+	/* CqRNA = calculated value
 	{	// THIS SHOULD ONLY HAPPEN IF NOT GOTO CALC_DONE
 
 		foreach( double cqDna, cqDnaTab ) {
@@ -1335,7 +1495,6 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 		calcReport.cqRnaCount = cqRnaTab.size();
 		calcReport.cqRna = Mean<double>( cqRnaTab );
 		calcReport.cqRnaSd = SD<double>( cqRnaTab );
-		calcReport.cqRna1 = Kubi( cqNa, Mean<double>( useable_cqDnaTab ) );
 		calcReport.cqDnaCount2 = useable_cqDnaTab.size();
 		calcReport.cqDna2 = Mean<double>( useable_cqDnaTab );
 
@@ -1355,10 +1514,9 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 			  Mean<double>( useable_cqDnaTab ) );
 			_data[ ridx ][ cidx ].setCqRNA(
 			  Mean<double>( cqRnaTab ) );
-			_data[ ridx ][ cidx ].setCqRNA1(
-			  Kubi( cqNa, Mean<double>( useable_cqDnaTab ) ) );
 		}
 	}	// END BAD WHITESPACE
+	*/
 /*
 	if( pctCalc >= _gradeC ) {
 		// this is an F condition
@@ -1380,7 +1538,6 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 		//0	 Mean<double>( cqRnaTab );
 		//	-> here we have 2 SD, one for CqRna and CqDna
 		//
-		//	CqRna1	
 		//1	 Kubi( cqNa, Mean<double>( cqDnaTab ) )
 		// 	-> no SD CqRna but we do have the SD for cqDna
 		//
@@ -1398,7 +1555,6 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 		calcReport.cqRnaCount = cqRnaTab.size();
 		calcReport.cqRna = Mean<double>( cqRnaTab );
 		calcReport.cqRnaSd = SD<double>( cqRnaTab );
-		calcReport.cqRna1 = Kubi( cqNa, Mean<double>( useable_cqDnaTab ) );
 		calcReport.cqDnaCount2 = useable_cqDnaTab.size();
 		calcReport.cqDna2 = Mean<double>( useable_cqDnaTab );
 
@@ -1418,8 +1574,6 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 			  Mean<double>( useable_cqDnaTab ) );
 			_data[ ridx ][ cidx ].setCqRNA(
 			  Mean<double>( cqRnaTab ) );
-			_data[ ridx ][ cidx ].setCqRNA1(
-			  Kubi( cqNa, Mean<double>( useable_cqDnaTab ) ) );
 		}
 	}
 */
@@ -1457,26 +1611,37 @@ bool	VPStore::run()
 					foreach( QString sample, _outputRows ) {
 						int	ridx = rowIndex( sample );
 						_data[ ridx ][ cidx ].setFlag( VP::AA3 );
+						_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA3 );
+			/* THIS WAS HAPPENING EVERYWHERE
 						_data[ ridx ][ cidx ].setCqRNA(
 					 	_data[ ridx ][ cidx ].input().toDouble() );
+			*/
 					}
 					break;
 				case	VP::APLUS2:
 					foreach( QString sample, _outputRows ) {
 						int	ridx = rowIndex( sample );
 						_data[ ridx ][ cidx ].setFlag( VP::AA2 );
+						_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA2 );
+			/* THIS WAS HAPPENING EVERYWHERE
+
 						_data[ ridx ][ cidx ].setCqRNA(
 					 	_data[ ridx ][ cidx ].input().toDouble() );
+			*/
 					}
 					break;
 				case	VP::APLUS:
 					foreach( QString sample, _outputRows ) {
 						int	ridx = rowIndex( sample );
 						_data[ ridx ][ cidx ].setFlag( VP::AA );
+						_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA );
+			/* THIS WAS HAPPENING EVERYWHERE
 						_data[ ridx ][ cidx ].setCqRNA(
 					 	_data[ ridx ][ cidx ].input().toDouble() );
+			*/
 					}
 					break;
+/*
 				case	VP::LOWCONF:
 					foreach( QString sample, _outputRows ) {
 						int	ridx = rowIndex( sample );
@@ -1490,6 +1655,7 @@ bool	VPStore::run()
 						//_data[ ridx ][ cidx ].setFlag( VP::HIGHSD );
 					}
 					break;
+*/
 				default:
 					break;
 			}
@@ -1501,6 +1667,7 @@ bool	VPStore::run()
 					_data[ ridx ][ cidx ].setFlag( VP::ND );
 				} else if( _astarSamples.contains( sample ) ) {
 					_data[ ridx ][ cidx ].setFlag( VP::ASTAR );
+					_data[ ridx ][ cidx ].setGrade( VP::FLAG_ASTAR );
 				} else {
 					calc( goi, sample );
 				}
@@ -2058,7 +2225,6 @@ QList<Row>	VPStore::data( const VP::DataRole& role ) const
 			rv = inoutData();
 			break;
 		case	VP::CqRna:
-		case	VP::CqRna1:
 		case	VP::CqDna:
 		case	VP::PctDna:
 		case	VP::Score:
@@ -2203,11 +2369,14 @@ QList<Row>	VPStore::outputData( const VP::DataRole& role ) const
 		t.insert( COLUMN_SAMPLE, _inputRows.at( ridx ) );
 		for( int j = 0; j < hdr.size(); ++j ) {
 			int cidx = colIndex( hdr.at( j ) );
+			t.insert( _inputCols.at( cidx ), _data[ ridx ][ cidx ].data( role ) );
+/* TODO check this change
 			if( role == VP::Score ) {
 				t.insert( _inputCols.at( cidx ), vpScore( ridx, cidx ) );
 			} else {
 				t.insert( _inputCols.at( cidx ), _data[ ridx ][ cidx ].data( role ) );
 			}
+*/
 		}
 		rv << t;
 	}
@@ -2239,15 +2408,13 @@ QString		VPStore::vpScore( const int& ridx, const int& cidx ) const
 		case	VP::AA2:
 		case	VP::AA:
 		case	VP::ASTAR:
-			rv = _data[ ridx ][ cidx ].flagString();
-			break;
 		case	VP::K0:
-		case	VP::HIGHDNA:
 		case	VP::NOAMP:
 		case	VP::OVERLOD:
 		case	VP::EXPFAIL:
 		case	VP::ND:
 		case	VP::ERROR:
+qDebug() << "BEWARE THIS DOES HAPPEN SCORE IS CALLED WHEN IT SHOULD NOT BE";
 			rv = _data[ ridx ][ cidx ].flagString();
 			break;
 	}

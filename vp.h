@@ -50,11 +50,11 @@ namespace	VP
 	const QString	FLAG_F = "F";
 
 	enum	GoiFlag	{
-		CALC, APLUS3, APLUS2, APLUS, LOWCONF
+		CALC, APLUS3, APLUS2, APLUS //, LOWCONF
 	};
 	enum	Flag	{
-		NADA, AA3, AA2, AA, ASTAR, K0,
-		 HIGHDNA, HIGHSD,
+		NADA, AA3, AA2, AA, ASTAR, K0, HIGHSD,
+		 //HIGHDNA, HIGHSD,
 		 NOAMP, OVERLOD, EXPFAIL, ND, ERROR
 	};
 	enum	State	{
@@ -64,16 +64,25 @@ namespace	VP
 		//
 	enum	DataRole {
 		Input, Working, InOut, 
-		CqRna, CqRna1, CqDna, PctDna, Score, CalcNa
+		CqRna, CqDna, PctDna, Score, CalcNa
 	};
 	enum	Confidence {
-		High, Med, Low, NotUsed
+		High, Low, NotUsed
+		//High, Med, Low, NotUsed
 	};
 	const QString	FLUID = "Fluidigm";
 	const QString	SIMPLE = "Spreadsheet";
 	const QString	STEPONE = "Abi-StepOne";
 	const QString	CUSTOM = "Custom";
 
+inline	QVariant	VD( const double& value )
+{
+	if( value == VP::FLAG ) {
+		return( V( "NA" ) );
+	} else {
+		return( V( value ) );
+	}
+}
 inline	QString	GoiFlagString( const GoiFlag& flag )
 {
 	QString rv = FLAG_ERROR;
@@ -91,9 +100,11 @@ inline	QString	GoiFlagString( const GoiFlag& flag )
 		case	APLUS:
 			rv = FLAG_AA;
 			break;
+/*
 		case	LOWCONF:
 			rv = FLAG_HIGHSD;
 			break;
+*/
 	}
 	return( rv );
 }
@@ -120,9 +131,11 @@ inline	QString	FlagString( const Flag& flag )
 		case	K0:
 			rv = FLAG_K0;
 			break;
+/*
 		case	HIGHDNA:
 			rv = FLAG_HIGHDNA;
 			break;
+*/
 		case	HIGHSD:
 			rv = FLAG_HIGHSD;
 			break;
@@ -149,9 +162,11 @@ inline	QString	ConfidenceString( const Confidence& confidence )
 		case	High:
 			return( "High" );
 			break;
+/*
 		case	Med:
 			return( "Med" );
 			break;
+*/
 		case	Low:
 			return( "Low" );
 			break;
@@ -203,9 +218,6 @@ inline	QString	RoleString( const DataRole& role )
 			break;
 		case	CqRna:
 			rv = "CqRNA";
-			break;
-		case	CqRna1:
-			rv = "CqRNA-1";
 			break;
 		case	CqDna:
 			rv = "CqDNA";

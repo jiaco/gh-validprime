@@ -70,7 +70,7 @@ public:
 	CalcReport();
 	QString	goi, sample, mesg;
 	int	cqDnaCount, cqDnaCount2, cqRnaCount;
-	double	cqInput, cqDna, pctDna, cqDna2, cqRna, cqRnaSd, cqRna1;
+	double	cqInput, cqDna, pctDna, cqDna2, cqRna, cqRnaSd;
 
 static	void	ShowHeader( QTextStream& fp );
 	void	show( QTextStream& fp );
@@ -86,6 +86,7 @@ public:
 	void	setCqNA( const double& value );
 	void	setCqDNA( const double& value );
 	void	setPctDNA( const double& value );
+	void	setGrade( const QString& value );
 	void	setCqRNA( const double& value );
 	void	confirmCqNA();
 
@@ -99,11 +100,7 @@ public:
 	double	cqDNA() const;
 	double	pctDNA() const;
 	double	cqRNA() const;
-
-	double		_cqRNA1;	// alternate calculation
-					// using Kubi( na, mean( dna ) );
-	void	setCqRNA1( const double& value );
-	double	cqRNA1() const;
+	QString	grade() const;
 
 	QVariant	_input;
 	VP::Flag	_flag;
@@ -112,6 +109,7 @@ public:
 	double		_cqDNA;
 	double		_pctDNA;
 	double		_cqRNA;
+	QString		_grade;
 };
 
 	// TODO	 make sure that no Cq is reported as ZERO as it is in the init() state

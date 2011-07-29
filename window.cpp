@@ -420,7 +420,7 @@ void	Window::viewGrid( const VP::DataRole& role )
 		return;
 	}
 	GridWidget::ShowTable( _myApp->header( role ),
-	_myApp->verticalHeader( role ), _myApp->data( role ) );
+	_myApp->verticalHeader( role ), _myApp->data( role ), RoleString( role ) );
 }
 void	Window::toggleGrid( const VP::DataRole& role )
 {
