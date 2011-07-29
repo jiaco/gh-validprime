@@ -8,15 +8,22 @@
 
 	checkbox in Check and if not-checked and not at least 3 gDNA then warn
 	and send back to Check
+DONE
 
 1) get params to be keyed : load/inputfile load/inputformat
  and then use that _myApp->paramNames( "load" );
+DONE
 
 2) get advanced run params in place and in GUI
 
 3) stop putting _#_ in front of samples and put (rlabel-Row%1) only if duplicate
+WAIT this is messed up via the Conc Sorter
 
 4) fix all crashes when loading from wrong format and figure out what
  kind of code is just seqfaulting
 
 5) add colors and heat map preferences
+
+6) wait to push until this is all implemented
+
+BUG IS IN HEATMAP CODE...

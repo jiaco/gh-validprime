@@ -446,29 +446,35 @@ void	VPCell::setCqRNA1( const double& value )
 	VPStore::VPStore()
 {
 	_data = 0;
+	_cmap = new ColorMap();
 }
 	VPStore::~VPStore()
 {
 	deleteData();
 }
-	// TODO
+	// TODO - but likely finished, one more check cannot hurt
 	// NEED TO SEE IF WE ALREADY HAVE DATA AND WHAT TO DO
 	// TO GET RID OF IT
 
 bool	VPStore::preload( CliApp* app )
 {
-	_inputFile = S( app->param( "InputFile" )->value() );
-	_inputFormat = S( app->param( "InputFormat" )->value() );
+	_inputFile = S( app->param( "load/file" )->value() );
+	_inputFormat = S( app->param( "load/format" )->value() );
 	return( true );
 }
 bool	VPStore::precheck( CliApp* app )
 {
-	_LOD = D( app->param( "LOD" )->value() );
-	_failFlag = S( app->param( "FailFlag" )->value() );
-	_noampFlag = S( app->param( "NoampFlag" )->value() );
+	_validateAssay = B( app->param( "check/validate" )->value() );
 
-	_vpaCol = S( app->param( "VpaCol" )->value() );
-	_gDnaRows = SL( app->param( "gDnaRows" )->value() );
+	_LOD = D( app->param( "check/lod" )->value() );
+	_failFlag = S( app->param( "check/failflag" )->value() );
+	_noampFlag = S( app->param( "check/noampflag" )->value() );
+
+	_vpaCol = S( app->param( "check/vpacol" )->value() );
+	_gDnaRows = SL( app->param( "check/gdnarows" )->value() );
+	_ignoreCols = SL( app->param( "check/ignorecols" )->value() );
+	_ignoreRows = SL( app->param( "check/ignorerows" )->value() );
+
 	if( _gDnaRows.at( 0 ).contains( "," ) ) {
 		_gDnaRows = _gDnaRows.at( 0 ).split( "," );
 	}
@@ -498,18 +504,18 @@ bool	VPStore::precheck( CliApp* app )
 		_gDnaConcValues << V( tlist.at( i ).value );
 	}
 	
-	_ignoreCols = SL( app->param( "IgnoreCols" )->value() );
-	_ignoreRows = SL( app->param( "IgnoreRows" )->value() );
 
 // TODO
 // second _cutoff for looSd
-	_minCountSdNa = I( app->param( "MinCountSdNa" )->value() );
-	_cutoffSdNa = D( app->param( "CutoffSdNa" )->value() );
+	_minSdCount = I( app->param( "check/minsdcount" )->value() );
 
-	_cutHighAll = D( app->param( "CutHighAll" )->value() );
-	_cutHighLoo = D( app->param( "CutHighLoo" )->value() );
+	_highAllSdCutoff = D( app->param( "check/highallsdcutoff" )->value() );
+	_highLooSdCutoff = D( app->param( "check/highloosdcutoff" )->value() );
+/*
+	_cutoffSdNa = D( app->param( "CutoffSdNa" )->value() );
 	_cutMedAll = D( app->param( "CutMedAll" )->value() );
 	_cutMedLoo = D( app->param( "CutMedLoo" )->value() );
+*/
 	return( true );
 }
 QStringList	VPStore::gDnaConcLabels() const
@@ -612,6 +618,10 @@ bool	VPStore::check()
 	}
 	if( _gDnaRowIndexes.size() == 0 ) {
 		setCritical( "gDNA(s) not found for input rows" );
+		return( false );
+	}
+	if( _validateAssay && _gDnaRowIndexes.size() < 3 ) {
+		setCritical( "Unable to validate assays with < 3 gDna samples" );
 		return( false );
 	}
 	_outputCols = _inputCols;
@@ -784,14 +794,18 @@ bool	VPStore::check_1()
 	 QString( "%1 gDna rows input, %2 gDna rows unflagged for VPA\n" )
 	  .arg( _gDnaRowIndexes.size() ).arg( _gDnaVpaRowIndexes.size() )
 	);
-	_checkMessage.append(
-	 QString( "LinReg all-gDna slope %1, Eff %2, R2 %3\n" )
-	  .arg( gDnaLR.slope() ).arg( gDnaLR.e() ).arg( gDnaLR.r2() )
-	);
-	_checkMessage.append(
-	 QString( "LinReg vpa-gDna slope %1, Eff %2, R2 %3\n" )
-	  .arg( gDnaVpaLR.slope() ).arg( gDnaVpaLR.e() ).arg(  gDnaVpaLR.r2() )
-	);
+	if( _gDnaRowIndexes.size() >= 3 ) {
+		_checkMessage.append(
+	 	 QString( "LinReg all-gDna slope %1, Eff %2, R2 %3\n" )
+	  	  .arg( gDnaLR.slope() ).arg( gDnaLR.e() ).arg( gDnaLR.r2() )
+		);
+	}
+	if( _gDnaVpaRowIndexes.size() >= 3 ) {
+		_checkMessage.append(
+		 QString( "LinReg vpa-gDna slope %1, Eff %2, R2 %3\n" )
+		  .arg( gDnaVpaLR.slope() ).arg( gDnaVpaLR.e() ).arg(  gDnaVpaLR.r2() )
+		);
+	}
 	return( true );
 }
 	//
@@ -835,6 +849,8 @@ bool	VPStore::check_2()
 			_astarSamples << rlabel;
 		} else {
 			if( flag == VP::OVERLOD ) {
+				// TODO, if we do this, but do not unset the flag
+				// will the data actually ever get used? No...
 				// set cqNA to LOD + 1.0
 				//
 				_data[ ridx ][ _vpaColIndex ].setCqNA( _LOD + 1 );
@@ -886,7 +902,7 @@ bool	VPStore::check_3()
 	// and will need a MAP GOI -> indexes as flagging is GIO-dependent now
 
 	int	nHigh = 0;
-	int	nMed = 0;
+	//int	nMed = 0;
 	int	nLow = 0;
 
 	double	APP_WEIGHT_NADA = -1;
@@ -897,6 +913,8 @@ bool	VPStore::check_3()
 	double	APP_CUTOFF_APLUS3 = 8;
 	double	APP_CUTOFF_APLUS2 = 5;
 	double	APP_CUTOFF_APLUS  = 2;
+
+	// if _validateAssay == false then a lot of this does not get done
 
 	_goiSummary.clear();
 	foreach( QString goi, _outputCols ) {
@@ -913,7 +931,13 @@ bool	VPStore::check_3()
 			int ridx = _gDnaRowIndexes.at( i );
 			switch( _data[ ridx ][ cidx ].flag() ) {
 				case	VP::EXPFAIL:
-					score += APP_WEIGHT_EXPFAIL;
+// CHANGED ON July 28 2011
+// Henrik wanted it
+					if( _data[ ridx ][ cidx ].cqNA() > _LOD ) {
+						score += APP_WEIGHT_OVERLOD;
+					} else {
+						score += APP_WEIGHT_EXPFAIL;
+					}
 					break;
 				case	VP::OVERLOD:
 					score += APP_WEIGHT_OVERLOD;
@@ -987,6 +1011,9 @@ bool	VPStore::check_3()
 		}
 		_goiSummary.insert( goi, summary );
 	}
+	if( _validateAssay == false ) {
+		return( true );
+	}
 	//	IMPORTANT NOTE: _gDnaForGoi now actually has row indexes
 	//
 	// Now get SD for deltaNA (VPA versus GOI)
@@ -1012,7 +1039,7 @@ bool	VPStore::check_3()
 		double	looSd = 0;
 		int	minAt = UINT;
 		
-		if( _goiSummary[ goi ].gDnaIndexes.size() < _minCountSdNa ) {
+		if( _goiSummary[ goi ].gDnaIndexes.size() < _minSdCount ) {
 			_goiSummary[ goi ].confidence = VP::Low;
 			_goiSummary[ goi ]._flag = VP::LOWCONF;
 			++nLow;
@@ -1023,12 +1050,7 @@ bool	VPStore::check_3()
 			continue;
 		}
 		allSd = getSd( _goiSummary[ goi ].gDnaIndexes, cidx );
-// TODO looSd only calculated if n >= 3
-// set a default, flag, unused value
-//
-			// TODO Hardwired 4 for now, should it be _minCountSdNa + 1?
-			//
-		if( _goiSummary[ goi ].gDnaIndexes.size() >= 4 ) {
+		if( _goiSummary[ goi ].gDnaIndexes.size() >= _minSdCount + 1 ) {
 			looSd = getSdLoo( _goiSummary[ goi ].gDnaIndexes, &minAt, cidx );
 		}
 		_goiSummary[ goi ].allSd = allSd;
@@ -1050,18 +1072,29 @@ bool	VPStore::check_3()
 			);
 		}
 
+		if( allSd <= _highAllSdCutoff ||
+		 ( minAt != UINT && looSd <= _highLooSdCutoff ) ) {
+			_goiSummary[ goi ].confidence = VP::High;
+			++nHigh;
+		} else {
+			_goiSummary[ goi ].confidence = VP::Low;
+			_goiSummary[ goi ]._flag = VP::LOWCONF;
+			++nLow;
+		}
+		if( minAt != UINT && looSd < allSd ) {
+			_goiSummary[ goi ].gDnaIndexes.removeOne( minAt );
+		}
+		_goiSummary[goi].linReg = getLinReg( _goiSummary[goi].gDnaIndexes, cidx );
+	}
+/* NO MORE MED CONFIDENCE
 		if( allSd <= _cutHighAll || ( minAt != UINT && looSd <= _cutHighLoo ) ) {
 			_goiSummary[ goi ].confidence = VP::High;
 		} else if( allSd <= _cutMedAll || ( minAt != UINT && looSd <= _cutMedLoo ) ) {
 			_goiSummary[ goi ].confidence = VP::Med;
 		}
-	//	Low-Confidence will be a GOI_global flag and no calculations
-	//	will be made down the entire GOI-column.
-	//	TODO, not true anymore, want different behavior for A, versus B C F
+*/
 
-// TODO
-// need a second _cutoff for Loo-Sd
-//
+/*
 		if( allSd <= _cutoffSdNa && looSd <= _cutoffSdNa ) {
 			_goiSummary[ goi ].confidence = VP::High;
 			// THINKING...FUTURE
@@ -1091,10 +1124,11 @@ bool	VPStore::check_3()
 		}
 		_goiSummary[goi].linReg = getLinReg( _goiSummary[goi].gDnaIndexes, cidx );
 	}
+*/
 	_checkMessage.append( QString(
-"Out of %1 output columns, %2 will be used for calculations (%3 High, %4 Med, %5 Low) \n" )
+"Out of %1 output columns, %2 will be used for calculations (%3 High, %4 Low) \n" )
 	.arg( _outputCols.size() ).arg( _goiSummary.size() )
-	.arg( nHigh ).arg( nMed ).arg( nLow )
+	.arg( nHigh ).arg( nLow )
 	);
 	return( true );
 } 
@@ -1153,19 +1187,42 @@ double	VPStore::getSdLoo( const QList<int>& rowIndexes, const double& minSd,
 bool	VPStore::prerun( CliApp* app )
 {
 	//	PERCENT NOW STORED AS PERCENT
-	_gradeA = D( app->param( "GradeA" )->value() );
+	_gradeA = D( app->param( "run/gradea" )->value() );
 	if( _gradeA < 1 ) {
 		_gradeA *= 100;
 	}
-	_gradeB = D( app->param( "GradeB" )->value() );
+	_gradeB = D( app->param( "run/gradeb" )->value() );
 	if( _gradeB < 1 ) {
 		_gradeB *= 100;
 	}
-	_gradeC = D( app->param( "GradeC" )->value() );
+	_gradeC = D( app->param( "run/gradec" )->value() );
 	if( _gradeC < 1 ) {
 		_gradeC *= 100;
 	}
 	return( true );
+}
+bool	VPStore::preheatmap( CliApp *app )
+{
+	_cmap->clear();
+	_cmap->insert( VP::FLAG_AA3, CLR( app->param( "heatmap/coloraplus" )->value() ) );
+	_cmap->insert( VP::FLAG_AA2, CLR( app->param( "heatmap/coloraplus" )->value() ) );
+	_cmap->insert( VP::FLAG_AA, CLR( app->param( "heatmap/coloraplus" )->value() ) );
+	_cmap->insert( VP::FLAG_ASTAR, CLR( app->param( "heatmap/colorastar" )->value() ) );
+	_cmap->insert( VP::FLAG_HIGHDNA, CLR( app->param( "heatmap/colorhighdna" )->value() ) );
+	_cmap->insert( VP::FLAG_HIGHSD, CLR( app->param( "heatmap/colorhighsd" )->value() ) );
+	_cmap->insert( VP::FLAG_NOAMP, CLR( app->param( "heatmap/colornoamp" )->value() ) );
+	_cmap->insert( VP::FLAG_OVERLOD, CLR( app->param( "heatmap/coloroverlod" )->value() ) );
+	_cmap->insert( VP::FLAG_EXPFAIL, CLR( app->param( "heatmap/colorexpfail" )->value() ) );
+	_cmap->insert( VP::FLAG_A, CLR( app->param( "heatmap/colora" )->value() ) );
+	_cmap->insert( VP::FLAG_B, CLR( app->param( "heatmap/colorb" )->value() ) );
+	_cmap->insert( VP::FLAG_C, CLR( app->param( "heatmap/colorc" )->value() ) );
+	_cmap->insert( VP::FLAG_F, CLR( app->param( "heatmap/colorf" )->value() ) );
+
+	return( true );
+}
+ColorMap*	VPStore::colorMap() const
+{
+	return( _cmap );
 }
 bool	VPStore::calc( const QString& goi, const QString& sample )
 {
@@ -1244,10 +1301,6 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	calcReport.cqDna = Mean<double>( cqDnaTab );
 	calcReport.pctDna = _data[ridx][cidx].pctDNA();
 
-// TODO
-// pretty sure this is what is bugging Henrik right now
-// if LOWCONF does not get checked before HIGHDNA and it is likely that 
-// most LOWCONF are HIGHDNA too.
 	grade = vpScore( ridx, cidx );
 	
 	_data[ ridx ][ cidx ].setCqDNA( Mean<double>( cqDnaTab ) );
@@ -1262,6 +1315,8 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 		calcReport.mesg = "HIGHDNA";
 		goto CALC_DONE;
 	} else if( _goiSummary[ goi ]._flag == VP::LOWCONF ) {
+		// GoiSummary constructor sets _flag to VP::CALC
+		// so if _validateAssay == false this will not happen
 		// HIGHSD
 		// CqRNA = ND
 		_data[ ridx ][ cidx ].setFlag( VP::HIGHSD );
@@ -1439,6 +1494,7 @@ bool	VPStore::run()
 					break;
 			}
 		} else {
+			// GoiSummary._flag == VP::CALC : the default condition
 			foreach( QString sample, _outputRows ) {
 				int	ridx = rowIndex( sample );
 				if( _failSamples.contains( sample ) ) {
@@ -1553,6 +1609,7 @@ QString	VPStore::colString( const int& index ) const
 }
 QString	VPStore::uniqueRowLabel( const Row& row ) const
 {
+	//return( QString( "%2_Row_%1" ).arg( S( row[ COLUMN_NID ] ) )
 	return( QString( "_%1_%2" ).arg( S( row[ COLUMN_NID ] ) )
 		.arg( S( row[ COLUMN_SAMPLE ] ) ) ); 
 }
@@ -1623,11 +1680,13 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
 {
 	int     lnum = 0;
         QStringList	tokens;
-        QString		rlabel;
-	int		ridx;
+        QString		rlabel, clabel;
+	int		ridx, cidx;
         Row     row;
         int     dataStart = UINT;
         int     qualityStart = UINT;
+	QString	save1, save2;
+	int	nWarn = 0;
 
         for( ; lnum < lines.size() && !lines.at( lnum ).isEmpty(); ++lnum ) {
                 _inputFileHeader << lines.at( lnum );
@@ -1638,11 +1697,13 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
         if( lnum < lines.size() && lines.at( lnum ).endsWith( "Ct" ) ) {
                 ++lnum;
         }
-        if( lnum >= lines.size() ) {
+        if( lnum >= lines.size() - 1 ) {
 		setCritical( "Fluidigm parser failed to parse input file" );
                 return( false );
         }
+	save1 = lines.at( lnum );
         ++lnum;
+	save2 = lines.at( lnum );
         tokens = lines.at( lnum ).split( "\t", QString::SkipEmptyParts );
         _inputCols = tokens;
         row.setSeparator( "\t" );
@@ -1654,7 +1715,18 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
         qualityStart = UINT;
         for( ; lnum < lines.size(); ++lnum ) {
                 if( lines.at( lnum ).startsWith( "Quality" ) ) {
-                        qualityStart = lnum + 3;
+			lnum++;
+			if( lnum >= lines.size()
+			 && lines.at( lnum ) != save1 ) {
+				break;
+			}
+			lnum++;
+			if( lnum >= lines.size()
+			 && lines.at( lnum ) != save2 ) {
+				break;
+			}
+			++lnum;
+                        qualityStart = lnum;
                         break;
                 }
                 row.split( lines.at( lnum ) );
@@ -1666,7 +1738,8 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
 	if( !newData() ) {
 		return( false );
 	}
-        for( lnum = dataStart; lnum < dataStart + _inputRows.size(); ++lnum ) {
+        for( lnum = dataStart; lnum < lines.size() &&
+	 lnum < dataStart + _inputRows.size(); ++lnum ) {
                 row.split( lines.at( lnum ) );
                 rlabel = uniqueRowLabel( row );
 		ridx = rowIndex( rlabel );
@@ -1683,19 +1756,38 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
                 return( true );
         }
 	lnum = qualityStart;
-        for( ; lnum < qualityStart + _inputRows.size(); ++ lnum ) {
+        for( ; lnum < lines.size() &&
+	 lnum < qualityStart + _inputRows.size(); ++lnum ) {
                 row.split( lines.at( lnum ) );
                 rlabel = uniqueRowLabel( row );
 		ridx = rowIndex( rlabel );
+		if( ridx == UINT ) {
+			++nWarn;
+			continue;
+		}
                 for( int j = 0; j < _inputCols.size(); ++j ) {
-			QString	clabel = _inputCols.at( j );
+			if( j >= _inputCols.size() ) {
+				setCritical( "Error: input file has a format error" );
+				return( false );
+			}
+			clabel = _inputCols.at( j );
+			cidx = colIndex( clabel );
+			if( cidx == UINT ) {
+				++nWarn;
+				continue;
+			}
                         if( S( row[ clabel ] ) == "Fail" &&
-			 getFlag( rlabel, clabel ) != VP::NOAMP ) {
+			 _data[ ridx ][ cidx ].flag() != VP::NOAMP ) {
+			 //getFlag( rlabel, clabel ) != VP::NOAMP ) {
 				_data[ ridx ][ j ].setFlag( VP::EXPFAIL );
 				_data[ ridx ][ j ].setInputFlagged();
 			}
                 }
         }
+	if( nWarn > 0 ) {
+		setWarning( "Fluidigm parser had warnings" );
+		return( false );
+	}
 	return( true );
 }
 bool	VPStore::parseStepone( const QStringList& lines )
@@ -2121,7 +2213,6 @@ QList<Row>	VPStore::outputData( const VP::DataRole& role ) const
 	}
 	return( rv );
 }
-
 QString		VPStore::vpScore( const int& ridx, const int& cidx ) const
 {
 	QString	rv;
@@ -2184,9 +2275,17 @@ void	VPStore::outputFileHeader( QTextStream& fp )
 	fp << "LinReg all-gDNA: slope " << gDnaLR.slope() << "; Eff " << gDnaLR.e() << "; R2 " << gDnaLR.r2() << endl;
 	fp << "LinReg VPA-gDNA: slope " << gDnaVpaLR.slope() << "; Eff " << gDnaVpaLR.e() << "; R2 " << gDnaVpaLR.r2() << endl;
 
+	fp << "ValidateAssays: ";
+	if( _validateAssay ) {
+		fp << "true";
+	} else {
+		fp << "false";
+	}
+	fp << endl;
 	fp << "LOD: " << _LOD << endl;
-	fp << "DeltaCq Min Count: " << _minCountSdNa << endl;
-	fp << "DeltaCq SD Cutoff: " << _cutoffSdNa << endl;
+	fp << "DeltaCq Min Count: " << _minSdCount << endl;
+	fp << "DeltaCq AllSD Cutoff: " << _highAllSdCutoff << endl;
+	fp << "DeltaCq LooSD Cutoff: " << _highLooSdCutoff << endl;
 	// PERCENT NOW STORED AS PERCENT
 	fp << "Grade A: " << _gradeA << endl;
 	fp << "Grade B: " << _gradeB << endl;

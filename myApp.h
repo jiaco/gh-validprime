@@ -15,10 +15,12 @@ class	MyApp	:	public	CliApp
 public:
 	MyApp( int argc, char** argv );
 
+/*
 	QStringList	loadParams() const;
 	QStringList	checkParams() const;
 	QStringList	runParams() const;
 	QStringList	saveParams() const;
+*/
 	QStringList	inputFormatChoice() const;
 
 	QStringList	header( const VP::DataRole& role ) const;
@@ -41,6 +43,9 @@ public:
 
 	QString	getCheckCriticalMesg();
 	QString	getCheckWarningMesg();
+
+	void	prepareHeatMap();
+	ColorMap*	getColorMap() const;
 
 	QString	getCalcInfo( const QString& row, const QString& column,
 		 const VP::State& state = VP::Load ) const;
@@ -66,8 +71,10 @@ private:
 	Ofp	cout, cerr;
 
 	VPStore	store;
+/*
 	QStringList	_loadParams, _checkParams,
 			_runParams, _saveParams;
+*/
 
 	QStringList	_inputFormatChoice;
 };

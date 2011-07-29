@@ -1,6 +1,7 @@
 #ifndef	VPSTORE_H
 #define	VPSTORE_H	1
 #include <GhCore.h>
+#include <GhGui.h>
 #include "vp.h"
 using namespace GH;
 
@@ -136,6 +137,7 @@ public:
 	bool	check();
 	bool	prerun( CliApp* app );
 	bool	run();
+	bool	preheatmap( CliApp* app );
 
 	bool	parseFluidigm( const QStringList& lines );
 	bool	parseStepone( const QStringList& lines );
@@ -174,6 +176,7 @@ public:
 
 	QStringList	gDnaConcLabels() const;
 	QList<QVariant>	gDnaConcValues() const;
+	ColorMap	*colorMap() const;
 	
 	QString	vpScore( const int& ridx, const int& cidx ) const;
 
@@ -226,6 +229,7 @@ private:
 	//
 	//	check
 	//
+	bool	_validateAssay;
 	double		_LOD;
 	QString		_failFlag, _noampFlag;
 	QString		_vpaCol;
@@ -237,11 +241,17 @@ private:
 	QList<int>	_gDnaVpaRowIndexes;
 	QStringList	_ignoreRows, _ignoreCols;
 	double		_maxDeltaSd;
+
+
+	int		_minSdCount;
+	double		_highAllSdCutoff, _highLooSdCutoff;
+
+/*
 	int		_minCountSdNa;
 	double		_cutoffSdNa;
-
 	double		_cutHighAll, _cutHighLoo,
 			_cutMedAll, _cutMedLoo;
+*/
 
 	QStringList	_validSamples, _astarSamples, _failSamples;
 
@@ -264,5 +274,7 @@ private:
 	// stuff not really used
 	//
 	QStringList	_inputFileHeader;
+
+	ColorMap		*_cmap;
 };
 #endif	//	VPSTORE_H

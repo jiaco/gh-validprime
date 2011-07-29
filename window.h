@@ -47,6 +47,7 @@ private:
 	void	disableParams( const QStringList& names );
 	void	configureParams();
 	void	layoutParamParams( QGridLayout* layout );
+	void	layoutHeatmapParams( QGridLayout* layout );
 	void	layoutOutputParams( QGridLayout* layout );
 	void	setupActionToolBar();
 	void	setupMenu();
@@ -59,6 +60,8 @@ private:
 	QTabWidget	*_controlWidget;
 	QWidget		*_paramWidget;
 	QGridLayout	*_paramLayout;
+	QWidget		*_heatmapWidget;
+	QGridLayout	*_heatmapLayout;
 	QWidget		*_outputWidget;
 	QGridLayout	*_outputLayout;
 
