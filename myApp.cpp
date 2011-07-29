@@ -172,8 +172,6 @@ namespace	GH
 	 ParamModel::Color, tr( "Color C" ) );
 	addParam( "heatmap/colorf", "#ff9900",
 	 ParamModel::Color, tr( "Color F" ) );
-	addParam( "heatmap/colorhighdna", "#660000",
-	 ParamModel::Color, tr( "Color HIGHDNA" ) );
 	addParam( "heatmap/colorhighsd", "#330000",
 	 ParamModel::Color, tr( "Color HIGHSD" ) );
 	addParam( "heatmap/colorexpfail", "#000000",

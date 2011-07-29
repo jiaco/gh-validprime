@@ -301,27 +301,28 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 			}
 			break;
 		case	VP::CqRna:
-			if( _grade == VP::FLAG_A ) {
-				return( cqNA() );
-				break;
-			} else if( _grade == VP::FLAG_F ) {
-				return( V( VP::FLAG_HIGHDNA ) );
-			}
 			switch( _flag ) {
-				case	VP::AA3:
-				case	VP::AA2:
-				case	VP::AA:
-				case	VP::ASTAR:
-					return( cqNA() );
-					break;
 				case	VP::EXPFAIL:
 				case	VP::NOAMP:
 				case	VP::OVERLOD:
 				case	VP::HIGHSD:
 					return( V( flagString() ) );
 					break;
+				case	VP::AA3:
+				case	VP::AA2:
+				case	VP::AA:
+				case	VP::ASTAR:
+					return( cqNA() );
+					break;
 				default:
-					return( cqRNA() );
+					if( _grade == VP::FLAG_A ) {
+						return( cqNA() );
+						break;
+					} else if( _grade == VP::FLAG_F ) {
+						return( V( VP::FLAG_HIGHDNA ) );
+					} else {
+						return( cqRNA() );
+					}
 					break;
 			}
 			break;
@@ -1307,7 +1308,6 @@ bool	VPStore::preheatmap( CliApp *app )
 	_cmap->insert( VP::FLAG_AA2, CLR( app->param( "heatmap/coloraplus" )->value() ) );
 	_cmap->insert( VP::FLAG_AA, CLR( app->param( "heatmap/coloraplus" )->value() ) );
 	_cmap->insert( VP::FLAG_ASTAR, CLR( app->param( "heatmap/colorastar" )->value() ) );
-	_cmap->insert( VP::FLAG_HIGHDNA, CLR( app->param( "heatmap/colorhighdna" )->value() ) );
 	_cmap->insert( VP::FLAG_HIGHSD, CLR( app->param( "heatmap/colorhighsd" )->value() ) );
 	_cmap->insert( VP::FLAG_NOAMP, CLR( app->param( "heatmap/colornoamp" )->value() ) );
 	_cmap->insert( VP::FLAG_OVERLOD, CLR( app->param( "heatmap/coloroverlod" )->value() ) );
@@ -1610,8 +1610,10 @@ bool	VPStore::run()
 				case	VP::APLUS3:
 					foreach( QString sample, _outputRows ) {
 						int	ridx = rowIndex( sample );
-						_data[ ridx ][ cidx ].setFlag( VP::AA3 );
-						_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA3 );
+						if( !_data[ ridx ][ cidx ].inputFlagged() ) {
+							_data[ ridx ][ cidx ].setFlag( VP::AA3 );
+							_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA3 );
+						}
 			/* THIS WAS HAPPENING EVERYWHERE
 						_data[ ridx ][ cidx ].setCqRNA(
 					 	_data[ ridx ][ cidx ].input().toDouble() );
@@ -1621,8 +1623,10 @@ bool	VPStore::run()
 				case	VP::APLUS2:
 					foreach( QString sample, _outputRows ) {
 						int	ridx = rowIndex( sample );
-						_data[ ridx ][ cidx ].setFlag( VP::AA2 );
-						_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA2 );
+						if( !_data[ ridx ][ cidx ].inputFlagged() ) {
+							_data[ ridx ][ cidx ].setFlag( VP::AA2 );
+							_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA2 );
+						}
 			/* THIS WAS HAPPENING EVERYWHERE
 
 						_data[ ridx ][ cidx ].setCqRNA(
@@ -1633,8 +1637,10 @@ bool	VPStore::run()
 				case	VP::APLUS:
 					foreach( QString sample, _outputRows ) {
 						int	ridx = rowIndex( sample );
-						_data[ ridx ][ cidx ].setFlag( VP::AA );
-						_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA );
+						if( !_data[ ridx ][ cidx ].inputFlagged() ) {
+							_data[ ridx ][ cidx ].setFlag( VP::AA );
+							_data[ ridx ][ cidx ].setGrade( VP::FLAG_AA );
+						}
 			/* THIS WAS HAPPENING EVERYWHERE
 						_data[ ridx ][ cidx ].setCqRNA(
 					 	_data[ ridx ][ cidx ].input().toDouble() );
@@ -1663,13 +1669,15 @@ bool	VPStore::run()
 			// GoiSummary._flag == VP::CALC : the default condition
 			foreach( QString sample, _outputRows ) {
 				int	ridx = rowIndex( sample );
-				if( _failSamples.contains( sample ) ) {
-					_data[ ridx ][ cidx ].setFlag( VP::ND );
-				} else if( _astarSamples.contains( sample ) ) {
-					_data[ ridx ][ cidx ].setFlag( VP::ASTAR );
-					_data[ ridx ][ cidx ].setGrade( VP::FLAG_ASTAR );
-				} else {
-					calc( goi, sample );
+				if( !_data[ ridx ][ cidx ].inputFlagged() ) {
+					if( _failSamples.contains( sample ) ) {
+						_data[ ridx ][ cidx ].setFlag( VP::ND );
+					} else if( _astarSamples.contains( sample ) ) {
+						_data[ ridx ][ cidx ].setFlag( VP::ASTAR );
+						_data[ ridx ][ cidx ].setGrade( VP::FLAG_ASTAR );
+					} else {
+						calc( goi, sample );
+					}
 				}
 			}
 		}
@@ -1683,8 +1691,9 @@ void	VPStore::summarizeGoi( GoiSummary *goiSummary )
 	int	cidx = colIndex( goiSummary->goi );
 	foreach( QString sample, _outputRows ) {
 		int ridx = rowIndex( sample );
+		grades << _data[ ridx ][ cidx ].grade();
 	//HERE TODO
-		grades << vpScore( ridx, cidx );
+		//grades << vpScore( ridx, cidx );
 	}
 	// these cases are GOI-global, so not worth doing
 	//
@@ -2393,6 +2402,7 @@ QString		VPStore::vpScore( const int& ridx, const int& cidx ) const
 			//	PERCENT NOW STORED AS PERCENT
 			pct = _data[ ridx ][ cidx ].pctDNA();
 			if( pct == 0 ) {
+qDebug() << "BEWARE A+err is possible";
 				rv = "A+err";
 			} else if( pct < _gradeA ) {
 				rv = VP::FLAG_A;
@@ -2414,7 +2424,7 @@ QString		VPStore::vpScore( const int& ridx, const int& cidx ) const
 		case	VP::EXPFAIL:
 		case	VP::ND:
 		case	VP::ERROR:
-qDebug() << "BEWARE THIS DOES HAPPEN SCORE IS CALLED WHEN IT SHOULD NOT BE";
+			// this never happens anymore
 			rv = _data[ ridx ][ cidx ].flagString();
 			break;
 	}
