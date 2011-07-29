@@ -1,13 +1,13 @@
 !include "Library.nsh"
 !include "MUI2.nsh"
 
-Name VP
+Name ValidPrime
 
-OutFile "VP_installer_v4.3.1.exe"
+OutFile "ValidPrime_installer_v0.9.1.exe"
 
-InstallDir $PROGRAMFILES\GeneHuggers\VP
+InstallDir $PROGRAMFILES\GeneHuggers\ValidPrime
 
-InstallDirRegKey HKLM "Software\GeneHuggers\VP" "Install_Dir"
+InstallDirRegKey HKLM "Software\GeneHuggers\ValidPrime" "Install_Dir"
 
 RequestExecutionLevel admin
 
@@ -50,7 +50,7 @@ Var ALREADY_INSTALLED
 !define	QTG_LIB '"${QT_BIN}\${QTG_DLL}"'
 
 
-!define	GH_VER "5.1.05"
+!define	GH_VER "5.9.05"
 !define	GH_DLL '${GH_VER}.dll'
 ;!define	GH_LIBS "C:\Gh"
 !define	GH_LIBS "C:\Gh"
@@ -81,7 +81,7 @@ Var ALREADY_INSTALLED
 SectionGroup	"Dependencies"
 
 ;	Section "-"
-;		IfFileExists "$INSTDIR\VP.exe" 0 new_install
+;		IfFileExists "$INSTDIR\ValidPrime.exe" 0 new_install
 ;			StrCpy $ALREADY_INSTALLED 1
 ;		new_install:
 ;	SectionEnd
@@ -118,16 +118,16 @@ Section "GeneHuggers"
 ;	SectionIn RO
 	SetOutPath $INSTDIR
 
-	File "release\VP.exe"
+	File "release\ValidPrime.exe"
 
-	WriteRegStr HKLM SOFTWARE\GeneHuggers\VP "Install_Dir" "$INSTDIR"
+	WriteRegStr HKLM SOFTWARE\GeneHuggers\ValidPrime "Install_Dir" "$INSTDIR"
 	
 ;
 ;	presume we need a subdir in the registry after genehuggers for each app
 
 	WriteRegStr HKLM \
 	"Software\Microsoft\Windows\CurrentVersion\Uninstall\GeneHuggers" \
-	"DisplayName" "VP"
+	"DisplayName" "ValidPrime"
 	WriteRegStr HKLM \
 	"Software\Microsoft\Windows\CurrentVersion\Uninstall\GeneHuggers" \
 	"UninstallString" '"$INSTDIR\uninstall.exe"'
@@ -143,8 +143,8 @@ SectionEnd
 
 Section "Start Menu Shortcuts"
 	CreateDirectory "$SMPROGRAMS\GeneHuggers"
-	CreateShortCut "$SMPROGRAMS\GeneHuggers\VP.lnk" \
-	"$INSTDIR\VP.exe" "" "$INSTDIR\VP.exe" 0
+	CreateShortCut "$SMPROGRAMS\GeneHuggers\ValidPrime.lnk" \
+	"$INSTDIR\ValidPrime.exe" "" "$INSTDIR\ValidPrime.exe" 0
 	CreateShortCut "$SMPROGRAMS\GeneHuggers\Uninstall.lnk" \
 	"$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
 SectionEnd
@@ -170,13 +170,13 @@ Section "Uninstall"
 
 	DeleteRegKey HKLM \
 	"Software\Microsoft\Windows\CurrentVersion\Uninstall\GeneHuggers"
-	DeleteRegKey HKLM SOFTWARE\GeneHuggers\VP
+	DeleteRegKey HKLM SOFTWARE\GeneHuggers\ValidPrime
 
-	Delete $INSTDIR\VP.exe
+	Delete $INSTDIR\ValidPrime.exe
 	Delete $INSTDIR\uninstall.exe
 
-	Delete "$SMPROGRAMS\GeneHuggers\VP\*.*"
+	Delete "$SMPROGRAMS\GeneHuggers\ValidPrime\*.*"
 
-	RMDir "$SMPROGRAMS\GeneHuggers\VP"
+	RMDir "$SMPROGRAMS\GeneHuggers\ValidPrime"
 	RMDir "$INSTDIR"
 SectionEnd
