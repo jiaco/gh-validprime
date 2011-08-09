@@ -96,7 +96,7 @@ namespace	GH
 	addParam( "run/gradeb", "25",
 	 ParamModel::Edit,
 	 tr( "Grade B max" ) );
-	addParam( "run/gradec", "50",
+	addParam( "run/gradec", "60",
 	 ParamModel::Edit,
 	 tr( "Grade C max" ) );
 
@@ -168,9 +168,9 @@ namespace	GH
 	 ParamModel::Color, tr( "Color A" ) );
 	addParam( "heatmap/colorb", "#ffcc66",
 	 ParamModel::Color, tr( "Color B" ) );
-	addParam( "heatmap/colorc", "#ff6600",
+	addParam( "heatmap/colorc", "#ff9900",
 	 ParamModel::Color, tr( "Color C" ) );
-	addParam( "heatmap/colorf", "#ff9900",
+	addParam( "heatmap/colorf", "#ff6600",
 	 ParamModel::Color, tr( "Color F" ) );
 	addParam( "heatmap/colorhighsd", "#330000",
 	 ParamModel::Color, tr( "Color HIGHSD" ) );

@@ -784,6 +784,7 @@ LinReg	VPStore::getLinReg( const QList<int>& rows, const int& cidx ) const
 		}
 		x << log10( _gDnaConcentrations.at( i ) );
 		y << _data[ ridx ][ cidx ].input().toDouble();
+qDebug() << x << "\t" << y;
 	}
 	rv.setIndexes( rows );
 	rv.compute( x, y );

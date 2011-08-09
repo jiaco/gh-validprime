@@ -106,7 +106,7 @@ void	Window::setState( const VP::State& state )
 			param( "check" )->setEnabled( true );
 			disableParams( _myApp->paramNames( "load" ) );
 			enableParams( _myApp->paramNames( "check" ) );
-			disableParams( _myApp->paramNames( "run" ) );
+			enableParams( _myApp->paramNames( "run" ) );
 			disableParams( _myApp->paramNames( "save" ) );
 			break;
 		case	VP::PostCheck:
