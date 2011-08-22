@@ -243,6 +243,7 @@ private:
 
 	int		_minSdCount;
 	double		_highAllSdCutoff, _highLooSdCutoff;
+	bool		_performLoo;
 
 /*
 	int		_minCountSdNa;

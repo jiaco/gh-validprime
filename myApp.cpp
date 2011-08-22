@@ -73,6 +73,9 @@ namespace	GH
 	 ParamModel::Edit, "High All-SD Cutoff" );
 	addParam( "check/highloosdcutoff", "0.2",
 	 ParamModel::Edit, "High LOO-SD Cutoff" );
+
+	addParam( "check/performloo", "false",
+	 ParamModel::Boolean, "Perform LOO" );
 /*
 	addParam( "CutMedAll", "0.45",
 	 ParamModel::Edit, "Medium All-SD Limit" );

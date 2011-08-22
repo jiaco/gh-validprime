@@ -609,6 +609,7 @@ bool	VPStore::precheck( CliApp* app )
 
 	_highAllSdCutoff = D( app->param( "check/highallsdcutoff" )->value() );
 	_highLooSdCutoff = D( app->param( "check/highloosdcutoff" )->value() );
+	_performLoo = B( app->param( "check/performloo" )->value() );
 /*
 	_cutoffSdNa = D( app->param( "CutoffSdNa" )->value() );
 	_cutMedAll = D( app->param( "CutMedAll" )->value() );
@@ -784,7 +785,6 @@ LinReg	VPStore::getLinReg( const QList<int>& rows, const int& cidx ) const
 		}
 		x << log10( _gDnaConcentrations.at( i ) );
 		y << _data[ ridx ][ cidx ].input().toDouble();
-qDebug() << x << "\t" << y;
 	}
 	rv.setIndexes( rows );
 	rv.compute( x, y );
@@ -1151,7 +1151,8 @@ bool	VPStore::check_3()
 			continue;
 		}
 		allSd = getSd( _goiSummary[ goi ].gDnaIndexes, cidx );
-		if( _goiSummary[ goi ].gDnaIndexes.size() >= _minSdCount + 1 ) {
+		if( _performLoo &&
+		 _goiSummary[ goi ].gDnaIndexes.size() >= _minSdCount + 1 ) {
 			looSd = getSdLoo( _goiSummary[ goi ].gDnaIndexes, &minAt, cidx );
 		}
 		_goiSummary[ goi ].allSd = allSd;
@@ -1374,12 +1375,18 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	cqNa = _data[ ridx ][ cidx ].cqNA();
 	calcReport.cqInput = cqNa;
 
+if( goi == "gapdh" ) {
+	qDebug() << goi << ":" << sample;
+}
 	foreach( int gDnaRowIndex, _goiSummary[ goi ].gDnaIndexes ) {
 		double	gDnaGoi = _data[ gDnaRowIndex ][ cidx ].cqNA();
 		double	sampleVpa = _data[ ridx ][ _vpaColIndex ].cqNA();
 		double	gDnaVpa = _data[ gDnaRowIndex ][ _vpaColIndex ].cqNA();
 
 		double	cqDna = sampleVpa + ( gDnaGoi - gDnaVpa );
+if( goi == "gapdh" ) {
+	qDebug() << cqDna << " = " << sampleVpa << " + ( " << gDnaGoi << " - " << gDnaVpa << " )";
+}
 		cqDnaTab << cqDna;
 		//
 		//	4th July 2011 :
@@ -1401,6 +1408,9 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	_data[ridx][cidx].setCqDNA( Mean<double>( cqDnaTab ) );
 	_data[ridx][cidx].setGrade( vpScore( ridx, cidx ) );
 
+if( goi == "gapdh" ) {
+	qDebug() << pctCalc << " % from mean = " << Mean<double>( cqDnaTab );
+}
 	calcReport.cqDnaCount = cqDnaTab.size();
 	calcReport.cqDna = Mean<double>( cqDnaTab );
 	calcReport.pctDna = _data[ridx][cidx].pctDNA();
@@ -1435,6 +1445,8 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 			useable_cqDnaTab << cqDna;
 		}
 	}
+
+
 	calcReport.mesg = "CALC";
 	calcReport.cqRnaCount = cqRnaTab.size();
 	calcReport.cqRna = Mean<double>( cqRnaTab );
@@ -1459,6 +1471,12 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 		_data[ ridx ][ cidx ].setCqRNA(
 		  Mean<double>( cqRnaTab ) );
 	}
+if( goi == "gapdh" ) {
+	qDebug() << "CqDNA: " << useable_cqDnaTab;
+	qDebug() << "CqRNA: " << cqRnaTab;
+	qDebug() << "Final CqRNA = " << _data[ridx][cidx].cqRNA();
+	qDebug() << "";
+}
 
 	/*grade = vpScore( ridx, cidx );
 	
