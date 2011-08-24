@@ -9,7 +9,7 @@ const	QString	COLUMN_SAMPLE = "SAMPLE";
 
 namespace	VP
 {
-	const QString	VERSION = "v.0.9.2";
+	const QString	VERSION = "v.0.9.3";
 
 	const double	CHECK0_PCTFAIL_CRIT = 0.9;
 	const double	CHECK0_PCTFAIL_WARN = 0.5;
@@ -35,7 +35,6 @@ namespace	VP
 	const QString	FLAG_AA2 = "A++";
 	const QString	FLAG_AA = "A+";
 	const QString	FLAG_ASTAR = "A*";
-	const QString	FLAG_K0 = "K0";
 	const QString	FLAG_HIGHDNA = "HIGHDNA";
 	const QString	FLAG_HIGHSD = "HIGHSD";
 	const QString	FLAG_NOAMP = "NOAMP";
@@ -53,7 +52,7 @@ namespace	VP
 		CALC, APLUS3, APLUS2, APLUS //, LOWCONF
 	};
 	enum	Flag	{
-		NADA, AA3, AA2, AA, ASTAR, K0, HIGHSD,
+		NADA, AA3, AA2, AA, ASTAR, HIGHSD,
 		 //HIGHDNA, HIGHSD,
 		 NOAMP, OVERLOD, EXPFAIL, ND, ERROR
 	};
@@ -70,7 +69,7 @@ namespace	VP
 		High, Low, NotUsed
 		//High, Med, Low, NotUsed
 	};
-	const QString	FLUID = "Fluidigm";
+	const QString	FLUID = "Biomark";
 	const QString	SIMPLE = "Spreadsheet";
 	const QString	STEPONE = "Abi-StepOne";
 	const QString	CUSTOM = "Custom";
@@ -127,9 +126,6 @@ inline	QString	FlagString( const Flag& flag )
 			break;
 		case	ASTAR:
 			rv = FLAG_ASTAR;
-			break;
-		case	K0:
-			rv = FLAG_K0;
 			break;
 /*
 		case	HIGHDNA:

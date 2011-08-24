@@ -39,6 +39,7 @@ public:
 	bool		gDnaReady();
 	QStringList	gDnaConcLabels() const;
 	QList<QVariant>	gDnaConcValues() const;
+	void		gDnaFromUser( const QVariant& values );
 	//void		setState( const VP::State& state );
 
 	QString	getCheckCriticalMesg();

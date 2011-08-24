@@ -3,6 +3,8 @@
 #include <GhCore.h>
 #include <GhGui.h>
 #include "vp.h"
+#include "ghDilSeries.h"
+
 using namespace GH;
 
 /* SVS
@@ -26,6 +28,7 @@ using namespace GH;
 				flag cqRNA as Flag::HIGHSD
 		
 */
+/*
 class	TempConc
 {
 public:
@@ -36,7 +39,7 @@ static	double	SnarfConc( const QString& label );
 	double	value;
 };
 bool	TempConcSort( const TempConc& e1, const TempConc& e2 );
-
+*/
 class	GoiSummary
 {
 public:
@@ -48,7 +51,7 @@ static	void	ShowHeader( QTextStream& fp );
 	LinReg	linReg;
 	int	nAA3, nAA2, nAA, nASTAR,
 		 nA, nB, nC, nF,
-		 nHIGHDNA, nHIGHSD, nK0, nND;
+		 nHIGHDNA, nHIGHSD, nND;
 
 	QString		goi;
 	VP::GoiFlag	_flag;
@@ -69,8 +72,8 @@ class	CalcReport
 public:
 	CalcReport();
 	QString	goi, sample, mesg;
-	int	cqDnaCount, cqDnaCount2, cqRnaCount;
-	double	cqInput, cqDna, pctDna, cqDna2, cqRna, cqRnaSd;
+	int	cqDnaCount;
+	double	cqInput, cqDna, pctDna, cqRna;
 
 static	void	ShowHeader( QTextStream& fp );
 	void	show( QTextStream& fp );
@@ -115,6 +118,8 @@ public:
 	// TODO	 make sure that no Cq is reported as ZERO as it is in the init() state
 	// as it is totally false and on the wrong end of the number line.
 
+	// need a way for VPStore to transmit to logWidget?
+	//
 class	VPStore	:	public	Errorprone
 {
 public:
@@ -136,6 +141,8 @@ public:
 	bool	prerun( CliApp* app );
 	bool	run();
 	bool	preheatmap( CliApp* app );
+
+	bool		fillConcMap( CliApp *app );
 
 	bool	parseFluidigm( const QStringList& lines );
 	bool	parseStepone( const QStringList& lines );
@@ -171,6 +178,7 @@ public:
 	QList<Row>	workingData() const; 
 	QList<Row>	inoutData() const; 
 	QList<Row>	outputData( const VP::DataRole& role ) const; 
+
 
 	QStringList	gDnaConcLabels() const;
 	QList<QVariant>	gDnaConcValues() const;
@@ -228,13 +236,17 @@ private:
 	//	check
 	//
 	bool	_validateAssay;
+	bool	_parseConc;
 	double		_LOD;
 	QString		_failFlag, _noampFlag;
 	QString		_vpaCol;
 	int		_vpaColIndex;
 	QStringList	_gDnaRows;
-	QList<double>	_gDnaConcentrations;
 	QList<QVariant>	_gDnaConcValues;
+	QMap<QString,double>	_gDnaConcMap;
+
+	//QList<double>	_gDnaConcentrations;
+
 	QList<int>	_gDnaRowIndexes;
 	QList<int>	_gDnaVpaRowIndexes;
 	QStringList	_ignoreRows, _ignoreCols;
@@ -258,6 +270,7 @@ private:
 	//	run
 	//
 	double		_gradeA, _gradeB, _gradeC;
+	bool		_correctA;
 
 	// store data
 	//

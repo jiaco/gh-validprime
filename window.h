@@ -40,6 +40,7 @@ public slots:
 	void	toggleGrid( const VP::DataRole& role );
 
 	void	showHelp();
+	void	showAbout();
 signals:
 	void	statusMessage( const QString& message, int timeout = 0 );
 private:
@@ -71,13 +72,14 @@ private:
 	QToolBar	*_actionToolBar;
 	QToolButton	*_gridToggle;
 	QLabel		*_gridDisplayed;
-	QMenu		*_viewMenu;
+	QMenu		*_viewMenu, *_helpMenu;
 	QStatusBar	*_statusBar;
 
 	VP::State	_state;
 
 	QString		_helpText;
 	QWidget		*_help;
+	QWidget		*_about;
 };
 
 }	//	GH namespace

@@ -55,8 +55,16 @@ namespace	GH
 	addParam( "check/gdnarows", debugRows,
 	 ParamModel::Choice | ParamModel::Selector,
 		tr( "gDNA Samples" ) );
+
+	addParam( "check/parseconc", "true",
+	 ParamModel::Boolean,
+	 tr( "Parse gDNA concentrations from row labels?" ) );
+
 	addParam( "check/gdnaconc", "", ParamModel::Action,
 		tr( "Check/Set [gDNA]" ) );
+
+	addParam( "hidden/gdnaconc", "", ParamModel::Choice, "" );
+
 	addParam( "check/ignorecols", "",
 	 ParamModel::Choice | ParamModel::Selector,
 		tr( "Ignore Assays" ) );
@@ -71,11 +79,11 @@ namespace	GH
 	 ParamModel::Edit, "Min-Count for SD" );
 	addParam( "check/highallsdcutoff", "0.3",
 	 ParamModel::Edit, "High All-SD Cutoff" );
-	addParam( "check/highloosdcutoff", "0.2",
-	 ParamModel::Edit, "High LOO-SD Cutoff" );
 
 	addParam( "check/performloo", "false",
 	 ParamModel::Boolean, "Perform LOO" );
+	addParam( "check/highloosdcutoff", "0.2",
+	 ParamModel::Edit, "High LOO-SD Cutoff" );
 /*
 	addParam( "CutMedAll", "0.45",
 	 ParamModel::Edit, "Medium All-SD Limit" );
@@ -102,6 +110,9 @@ namespace	GH
 	addParam( "run/gradec", "60",
 	 ParamModel::Edit,
 	 tr( "Grade C max" ) );
+	addParam( "run/correcta", "false",
+	 ParamModel::Boolean,
+	 tr( "Correct A Samples? (not recommended)" ) );
 
 /*
 	addParam( "MinCountSdRna", "3", 
@@ -148,6 +159,7 @@ namespace	GH
 	addParam( "reload", "", ParamModel::Action, tr( "Reload" ) );
 	addParam( "recheck", "", ParamModel::Action, tr( "Recheck" ) );
 	addParam( "help", "", ParamModel::Action, tr( "Help" ) );
+	addParam( "about", "", ParamModel::Action, tr( "About" ) );
 
 	addParam( "toggle/input", "", ParamModel::Action, tr( "Input" ) );
 	addParam( "toggle/cqrna", "", ParamModel::Action, tr( "CqRNA" ) );
@@ -238,15 +250,22 @@ QStringList	MyApp::inputFormatChoice() const
 }
 bool	MyApp::gDnaReady() {
 
-	if( store.gDnaConcLabels().size() == 0 ) {
+	//if( store.gDnaConcLabels().size() == 0 ) {
 		if( !store.precheck( this ) ) {
 			setError( store.error() );
 			store.clearError();
 			emit( emitError( error() ) );
 			return( false );
 		}
-	}
+	//}
 	return( true );
+}
+void	MyApp::gDnaFromUser( const QVariant& values )
+{
+	// here want to sort based on the input concentrations
+	// and update _gDnaRows and _gDnaConcValues
+	setParamValue( "hidden/gdnaconc", values );
+	store.fillConcMap( this );
 }
 QStringList	MyApp::gDnaConcLabels() const
 {

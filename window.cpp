@@ -33,8 +33,8 @@ namespace	GH
 	_outputWidget->setLayout( _outputLayout );
 
 	_controlWidget->addTab( _paramWidget, "Parameters" );
-	_controlWidget->addTab( _heatmapWidget, "Heatmap" );
 	_controlWidget->addTab( _outputWidget, "Output" );
+	_controlWidget->addTab( _heatmapWidget, "Heatmap" );
 	_dockWidget->setWidget( _controlWidget );
         addDockWidget( Qt::LeftDockWidgetArea, _dockWidget );
 
@@ -63,6 +63,10 @@ namespace	GH
 	// PNAME
 	ActionView::Action( this, "help" )->setShortcut(
 	 QKeySequence( QKeySequence::HelpContents ) );
+
+	//initLogWidget( Qt::Window );
+	//logWidget()->show();
+	//showMessage( Info( "DEBUG ON" ) );
 }
 void	Window::centralGridClicked(
 	 const QVariant& row, const QVariant& column )
@@ -145,7 +149,23 @@ void	Window::setState( const VP::State& state )
 void	Window::getUserConc()
 {
 	if( _myApp->gDnaReady() ) {
-		_myApp->setParamValue( "check/gdnaconc",
+/*
+		QVariant	v =
+	 	VariantListDialog::VariantList( this,
+	 	_myApp->gDnaConcLabels(),
+	 	V( _myApp->gDnaConcValues() ) );
+
+		_myApp->setParamValue( "hidden/gdnaconc", v );
+		
+
+		QList<QVariant>	t = v.toList();
+		foreach( QVariant vi, t ) {
+			showMessage( Info( QString( "%1" ).arg( V2S( vi ) ) ) );
+		}
+*/
+// DEBUG ON
+		_myApp->gDnaFromUser(
+		//_myApp->setParamValue( "hidden/gdnaconc",
 	 	VariantListDialog::VariantList( this,
 	 	_myApp->gDnaConcLabels(),
 	 	V( _myApp->gDnaConcValues() ) ) );
@@ -251,6 +271,10 @@ void	Window::setupMenu()
 	_viewMenu->addAction( ActionView::Action( this, "view/pctdna" ) );
 	_viewMenu->addAction( ActionView::Action( this, "view/score" ) );
 	_viewMenu->addAction( ActionView::Action( this, "view/heatmap" ) );
+
+	_helpMenu = menuBar()->addMenu( tr( "Help" ) );
+	_helpMenu->addAction( ActionView::Action( this, "about" ) );
+	_helpMenu->addAction( ActionView::Action( this, "help" ) );
 }
 void	Window::configureParams()
 {
@@ -280,6 +304,7 @@ void	Window::configureParams()
 	ActionView::AddListener( this, "save/autoname", _myApp, SLOT( autoNameOutput() ) );
 
 	ActionView::AddListener( this, "help", this, SLOT( showHelp() ) );
+	ActionView::AddListener( this, "about", this, SLOT( showAbout() ) );
 	//	CHOICES
 	//
 	ChoiceView::SetChoices( this, "load/format",
@@ -345,6 +370,30 @@ void	Window::showHelp()
 
 	_help->setObjectName( "HelpWidget" );
 	_help->show();
+}
+void	Window::showAbout()
+{
+	if( _about ) {
+		_about->show();
+		return;
+	}
+	_about = new QWidget( 0, Qt::Window );
+
+	QString	s;
+	QLabel	*lbl = new QLabel( this );
+	QGridLayout *lay = new QGridLayout;
+
+	s = QString( "gh-validprime\n"
+			"Version: %1\n"
+			"Author: Jason S. Iacovoni\n"
+		).arg( VP::VERSION );
+
+	lbl->setText( s );
+	lay->addWidget( lbl, 0, 0 );
+	_about->setLayout( lay );
+
+	_about->setObjectName( "AboutWidget" );
+	_about->show();
 }
 void	Window::viewHeatMap()
 {

@@ -2,6 +2,7 @@
 
 using namespace GH;
 
+/*
 TempConc::TempConc( const QString& rowLabel )
 {
 	label = rowLabel;
@@ -29,6 +30,11 @@ bool	TempConcSort( const TempConc& e1, const TempConc& e2 )
 {
 	return( e1.value < e2.value );
 }
+*/
+bool	DilSeriesSortV( const DilutionPoint& e1, const DilutionPoint& e2 )
+{
+	return( e1.value() < e2.value() );
+}
 
 GoiSummary::GoiSummary()
 {
@@ -47,7 +53,7 @@ void	GoiSummary::ShowHeader( QTextStream& fp )
 	 "GOI,gDNA Index Count,Flag,Confidence,All Sd,LOO Sd,gDNA Outlier"
 	 ",Slope,Eff,R2"
 	// ",nA+++,nA++,nA+,HIGHSD"
- 	 ",nA*,nA,nB,nC,nF,nK0,nND"
+ 	 ",nA*,nA,nB,nC,nF,nND"
 	 ).split( "," );
 
 	fp << hdr.join( "\t" ) << endl;
@@ -83,7 +89,6 @@ void	GoiSummary::show( QTextStream& fp )
 	 << "\t" << nC
 	 << "\t" << nF
 	 << "\t" << nHIGHDNA
-	 << "\t" << nK0
 	 << "\t" << nND
 	 << endl;
 }
@@ -172,11 +177,6 @@ void	VPStore::showGoiSummaryTransposed( QTextStream& fp )
 		fp << "\t" << _goiSummary[ goi ].nHIGHDNA;
 	}
 	fp << endl;
-	fp << "nK0";
-	foreach( QString goi, _outputCols ) {
-		fp << "\t" << _goiSummary[ goi ].nK0;
-	}
-	fp << endl;
 	fp << "nND";
 	foreach( QString goi, _outputCols ) {
 		fp << "\t" << _goiSummary[ goi ].nND;
@@ -237,8 +237,10 @@ void	VPStore::showGoiSummarySummary( QTextStream& fp )
 	CalcReport::CalcReport()
 {
 	goi = sample = mesg = "";
-	cqDnaCount = cqDnaCount2 = cqRnaCount = 0;
-	cqInput = cqDna = pctDna = cqDna2 = cqRna = cqRnaSd = 0.0;
+	cqDnaCount = 0;
+	//cqDnaCount = cqDnaCount2 = cqRnaCount = 0;
+	//cqInput = cqDna = pctDna = cqDna2 = cqRna = cqRnaSd = 0.0;
+	cqInput = cqDna = pctDna = cqRna = 0.0;
 }
 void	CalcReport::ShowHeader( QTextStream& fp )
 {
@@ -246,7 +248,7 @@ void	CalcReport::ShowHeader( QTextStream& fp )
 		"GOI,Sample,Note"
 		",CqInput"
 		",CqDNA Count,CqDNA,PctDNA"
-		",CqDNA Count-2,CqDNA-2,CqRNA Count,CqRNA,CqRNA-SD"
+		",CqRNA"
 	).split( "," );
 	fp << hdr.join( "\t" ) << endl;
 }
@@ -259,11 +261,7 @@ void	CalcReport::show( QTextStream& fp )
 	 << "\t" << cqDnaCount
 	 << "\t" << cqDna
 	 << "\t" << pctDna
-	 << "\t" << cqDnaCount2
-	 << "\t" << cqDna2
-	 << "\t" << cqRnaCount
 	 << "\t" << cqRna
-	 << "\t" << cqRnaSd
 	<< endl;
 }
 
@@ -315,6 +313,13 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 					return( cqNA() );
 					break;
 				default:
+					if( _grade == VP::FLAG_F ) {
+						return( V( VP::FLAG_HIGHDNA ) );
+					} else {
+						return( cqRNA() );
+					}
+/*
+ had to remove this for the new correctA option
 					if( _grade == VP::FLAG_A ) {
 						return( cqNA() );
 						break;
@@ -323,6 +328,7 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 					} else {
 						return( cqRNA() );
 					}
+*/
 					break;
 			}
 			break;
@@ -560,8 +566,14 @@ bool	VPStore::preload( CliApp* app )
 	_inputFormat = S( app->param( "load/format" )->value() );
 	return( true );
 }
+	//	precheck is also called by gDnaReady()
+	// 	so need to make sure it is harmless for all
+	//	things not related to gDNA concentration series
+	//
 bool	VPStore::precheck( CliApp* app )
 {
+	_parseConc = B( app->param( "check/parseconc" )->value() );
+
 	_validateAssay = B( app->param( "check/validate" )->value() );
 
 	_LOD = D( app->param( "check/lod" )->value() );
@@ -570,12 +582,26 @@ bool	VPStore::precheck( CliApp* app )
 
 	_vpaCol = S( app->param( "check/vpacol" )->value() );
 	_gDnaRows = SL( app->param( "check/gdnarows" )->value() );
+
 	_ignoreCols = SL( app->param( "check/ignorecols" )->value() );
 	_ignoreRows = SL( app->param( "check/ignorerows" )->value() );
 
-	if( _gDnaRows.at( 0 ).contains( "," ) ) {
-		_gDnaRows = _gDnaRows.at( 0 ).split( "," );
-	}
+	_minSdCount = I( app->param( "check/minsdcount" )->value() );
+	_highAllSdCutoff = D( app->param( "check/highallsdcutoff" )->value() );
+
+	_performLoo = B( app->param( "check/performloo" )->value() );
+	_highLooSdCutoff = D( app->param( "check/highloosdcutoff" )->value() );
+
+	_gDnaConcValues = app->param( "hidden/gdnaconc" )->value().toList();
+	/* gDnaRows is complicated...
+		filled here from the app and then reordered below
+		there is also a companion set of values which are
+		the actual concentrations
+			- either snarfed from the labels
+			- or entered via the GUI
+		so when reording takes place, those values also need
+		to be reordered and accessible for getLinReg
+	 */
 	// here we need to save gDnaRows for return value
 	//	from gDnaConcLabels
 	// and will also fill in QList<double> gDnaConcentrations
@@ -588,33 +614,56 @@ bool	VPStore::precheck( CliApp* app )
 	//
 	//	Dont need to worry about _gDnaRowIndexes here
 	//	as that will be handled next in check();
-
-	QList<TempConc>	tlist;
-	for( int i = 0; i < _gDnaRows.size(); ++i ) {
-		tlist << TempConc( _gDnaRows.at( i ) );
+	if( _gDnaRows.at( 0 ).contains( "," ) ) {
+		_gDnaRows = _gDnaRows.at( 0 ).split( "," );
 	}
-	qSort( tlist.begin(), tlist.end(), TempConcSort );
-	_gDnaConcentrations.clear();
-	_gDnaConcValues.clear();
-	for( int i = 0; i < tlist.size(); ++i ) {
-		_gDnaRows[ i ] = tlist.at( i ).label;
-		_gDnaConcentrations << tlist.at( i ).value;
-		_gDnaConcValues << V( tlist.at( i ).value );
-	}
-	
 
-// TODO
-// second _cutoff for looSd
-	_minSdCount = I( app->param( "check/minsdcount" )->value() );
-
-	_highAllSdCutoff = D( app->param( "check/highallsdcutoff" )->value() );
-	_highLooSdCutoff = D( app->param( "check/highloosdcutoff" )->value() );
-	_performLoo = B( app->param( "check/performloo" )->value() );
+	if( _parseConc ) {
+		DilSeries	dilSeries;
+		for( int i = 0; i < _gDnaRows.size(); ++i ) {
+			dilSeries << DilutionPoint( _gDnaRows.at( i ) );
+		}
+		qSort( dilSeries.begin(), dilSeries.end(), DilSeriesSortV );
+		_gDnaConcValues.clear();
+		for( int i = 0; i < dilSeries.size(); ++i ) {
+			_gDnaRows[ i ] = dilSeries.at( i ).label();
+			_gDnaConcValues << V( dilSeries.at( i ).value() );
+		}
+		app->setParamValue( "check/gdnarows", _gDnaRows );
+	} else if( _gDnaConcValues.size() != _gDnaRows.size() ) {
+		_gDnaConcValues.clear();
 /*
-	_cutoffSdNa = D( app->param( "CutoffSdNa" )->value() );
-	_cutMedAll = D( app->param( "CutMedAll" )->value() );
-	_cutMedLoo = D( app->param( "CutMedLoo" )->value() );
+		for( int i = 0; i < _gDnaRows.size(); ++i ) {
+			dilSeries <<
+			 DilutionPoint( _gDnaRows.at( i ), D( clist.at( i ) ) );
+			_gDnaConcValues << clist.at( i );
+		}
+	} else {
+		for( int i = 0; i < _gDnaRows.size(); ++i ) {
+			dilSeries << DilutionPoint( _gDnaRows.at( i ) );
+		}
 */
+	}
+	app->setParamValue( "hidden/gdnaconc", _gDnaConcValues );
+	fillConcMap( app );
+	return( true );
+}
+bool	VPStore::fillConcMap( CliApp *app )
+{
+	_gDnaConcMap.clear();
+	// get back to the app for the latest variables
+	_gDnaRows = SL( app->param( "check/gdnarows" )->value() );
+	if( _gDnaRows.at( 0 ).contains( "," ) ) {
+		_gDnaRows = _gDnaRows.at( 0 ).split( "," );
+	}
+	_gDnaConcValues = app->param( "hidden/gdnaconc" )->value().toList();
+	if( _gDnaRows.size() != _gDnaConcValues.size() ) {
+		return( false );
+	}
+	for( int i = 0; i < _gDnaRows.size(); ++i ) {
+		_gDnaConcMap.insert( _gDnaRows.at( i ),
+		 log10( _gDnaConcValues.at( i ).toDouble() ) );
+	}
 	return( true );
 }
 QStringList	VPStore::gDnaConcLabels() const
@@ -692,8 +741,6 @@ QString	VPStore::getCalcInfo( const QString& row, const QString& column,
 
 	return( rv );
 }
-	// TODO
-	// in check, get some error messages out about missing params
 bool	VPStore::check()
 {
 	_checkMessage.clear();
@@ -706,6 +753,8 @@ bool	VPStore::check()
 		setCritical( "gDNA(s) not specified for input rows" );
 		return( false );
 	}
+	//	NOTE: gDnaRows is sorted (by conc) in precheck()
+	//
 	_gDnaRowIndexes.clear();
 	foreach( QString s, _gDnaRows ) {
 		if( rowIndex( s ) == UINT ) {
@@ -772,10 +821,29 @@ bool	VPStore::check()
 	//
 	return( true );
 }
-LinReg	VPStore::getLinReg( const QList<int>& rows, const int& cidx ) const
+LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
+	 //const QList<double>& concValues,
+	 const int& cidx ) const
 {
 	LinReg		rv;
 	QList<double>	x, y;
+
+/*	if( rowIndexes.size() != concValues.size() ) {
+		return( rv );
+	}
+*/
+	for( int i = 0; i < rowIndexes.size(); ++i ) {
+		int ridx = rowIndexes.at( i );
+		if( _data[ ridx ][ cidx ].inputFlagged() ) {
+			continue;
+		}
+		x << _gDnaConcMap[ rowString( ridx ) ];
+		//x << log10( concValues.at( i ) );
+		y << _data[ ridx ][ cidx ].input().toDouble();
+	}
+
+/*
+
 
 	for( int i = 0; i < rows.size(); ++i ) {
 		//int	ridx = _gDnaRowIndexes.at( i );
@@ -783,10 +851,19 @@ LinReg	VPStore::getLinReg( const QList<int>& rows, const int& cidx ) const
 		if( _data[ ridx ][ cidx ].inputFlagged() ) {
 			continue;
 		}
-		x << log10( _gDnaConcentrations.at( i ) );
+	// this was a bug, we were accessing something that may not
+	// directly correspond to the input.
+	// get the string for the input row and use that to access
+	// the index position of the input to access conc array
+	//
+		QString s = rowString( ridx );
+		int idx = _gDnaRows.indexOf( s );
+
+		x << log10( _gDnaConcentrations.at( idx ) );
 		y << _data[ ridx ][ cidx ].input().toDouble();
 	}
-	rv.setIndexes( rows );
+*/
+	rv.setIndexes( rowIndexes );
 	rv.compute( x, y );
 	return( rv );
 }
@@ -899,10 +976,12 @@ bool	VPStore::check_1()
 	  	  .arg( gDnaLR.slope() ).arg( gDnaLR.e() ).arg( gDnaLR.r2() )
 		);
 	}
-	if( _gDnaVpaRowIndexes.size() >= 3 ) {
+	if( _gDnaVpaRowIndexes.size() >= 3 &&
+	  _gDnaVpaRowIndexes.size() != _gDnaRowIndexes.size() ) {
 		_checkMessage.append(
 		 QString( "LinReg vpa-gDna slope %1, Eff %2, R2 %3\n" )
-		  .arg( gDnaVpaLR.slope() ).arg( gDnaVpaLR.e() ).arg(  gDnaVpaLR.r2() )
+		  .arg( gDnaVpaLR.slope() ).arg( gDnaVpaLR.e() )
+		  .arg(  gDnaVpaLR.r2() )
 		);
 	}
 	return( true );
@@ -1186,7 +1265,8 @@ bool	VPStore::check_3()
 		if( minAt != UINT && looSd < allSd ) {
 			_goiSummary[ goi ].gDnaIndexes.removeOne( minAt );
 		}
-		_goiSummary[goi].linReg = getLinReg( _goiSummary[goi].gDnaIndexes, cidx );
+		_goiSummary[goi].linReg =
+		 getLinReg( _goiSummary[ goi ].gDnaIndexes, cidx );
 	}
 /* NO MORE MED CONFIDENCE
 		if( allSd <= _cutHighAll || ( minAt != UINT && looSd <= _cutHighLoo ) ) {
@@ -1288,7 +1368,8 @@ double	VPStore::getSdLoo( const QList<int>& rowIndexes, const double& minSd,
 }
 bool	VPStore::prerun( CliApp* app )
 {
-	//	PERCENT NOW STORED AS PERCENT
+	_correctA = B( app->param( "run/correcta" )->value() );
+
 	_gradeA = D( app->param( "run/gradea" )->value() );
 	if( _gradeA < 1 ) {
 		_gradeA *= 100;
@@ -1328,15 +1409,10 @@ ColorMap*	VPStore::colorMap() const
 bool	VPStore::calc( const QString& goi, const QString& sample )
 {
 	bool	rv = false;
-	double	cqRna;
-	double	pctCalc;
-	double	cqNa;
-	QList<double>	cqDnaTab, cqRnaTab, pctTab, useable_cqDnaTab;
-	//QString	grade;
+	double	cqNa, cqDna, pctDna, cqRna;
+	QList<double>	cqDnaTab;
 
 	CalcReport	calcReport;
-
-	_calcReport.clear();
 
 	calcReport.goi = goi;
 	calcReport.sample = sample;
@@ -1375,22 +1451,17 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	cqNa = _data[ ridx ][ cidx ].cqNA();
 	calcReport.cqInput = cqNa;
 
-if( goi == "gapdh" ) {
-	qDebug() << goi << ":" << sample;
-}
 	foreach( int gDnaRowIndex, _goiSummary[ goi ].gDnaIndexes ) {
 		double	gDnaGoi = _data[ gDnaRowIndex ][ cidx ].cqNA();
 		double	sampleVpa = _data[ ridx ][ _vpaColIndex ].cqNA();
 		double	gDnaVpa = _data[ gDnaRowIndex ][ _vpaColIndex ].cqNA();
 
 		double	cqDna = sampleVpa + ( gDnaGoi - gDnaVpa );
-if( goi == "gapdh" ) {
-	qDebug() << cqDna << " = " << sampleVpa << " + ( " << gDnaGoi << " - " << gDnaVpa << " )";
-}
 		cqDnaTab << cqDna;
 		//
 		//	4th July 2011 :
-		//	 Henrik chooses the method :PctDna( cqNa, Mean<double>( cqDnaTab ) 
+		//	 Henrik chooses the method:
+		//	   PctDna( cqNa, Mean<double>( cqDnaTab ) 
 		//
 		//	previous:
 		//	foreach() {
@@ -1399,27 +1470,29 @@ if( goi == "gapdh" ) {
 		//	}
 		//	pctCalc = Mean<double>( pctTab );
 	}
-	pctCalc = PctDna( cqNa, Mean<double>( cqDnaTab ) ) * 100;
 	rv = true;
+	cqDna = Mean<double>( cqDnaTab );
+	pctDna = PctDna( cqNa, cqDna ) * 100;
+
+	//pctCalc = PctDna( cqNa, Mean<double>( cqDnaTab ) ) * 100;
 	//	PERCENT NOW STORED BY DEFAULT
 	//	GRADE IS SET SIMULTANEOUSLY
 	//
-	_data[ridx][cidx].setPctDNA( pctCalc );
-	_data[ridx][cidx].setCqDNA( Mean<double>( cqDnaTab ) );
+	_data[ridx][cidx].setPctDNA( pctDna );
+	_data[ridx][cidx].setCqDNA( cqDna );
 	_data[ridx][cidx].setGrade( vpScore( ridx, cidx ) );
 
-if( goi == "gapdh" ) {
-	qDebug() << pctCalc << " % from mean = " << Mean<double>( cqDnaTab );
-}
 	calcReport.cqDnaCount = cqDnaTab.size();
-	calcReport.cqDna = Mean<double>( cqDnaTab );
-	calcReport.pctDna = _data[ridx][cidx].pctDNA();
+	calcReport.cqDna = cqDna;
+	calcReport.pctDna = pctDna;
 
 	// First test has to be for grade A
 	//
-	if( _data[ ridx ][ cidx ].grade() == VP::FLAG_A ) {
+	if( _correctA  == false && 
+	 _data[ ridx ][ cidx ].grade() == VP::FLAG_A ) {
 		calcReport.mesg = "NOCALC";
-		// GRADE A WILL OUTPUT CqNA
+		_data[ ridx ][ cidx ].setCqRNA( cqNa );
+		// GRADE A WILL OPTIONALLY OUTPUT CqNA
 		goto CALC_DONE;
 	}
 	// Second test has to be for grade F
@@ -1438,22 +1511,26 @@ if( goi == "gapdh" ) {
 	}
 	// ONLY GET HERE IF GRADE B or C and HIGHCONF
 	//
+	/* other method
 	foreach( double cqDna, cqDnaTab ) {
 		cqRna = Kubi( cqNa, cqDna );
 		if( cqRna > 0 ) {
 			cqRnaTab << cqRna;
 			useable_cqDnaTab << cqDna;
 		}
-	}
-
+	}*/
+	cqRna = Kubi( cqNa, cqDna );
 
 	calcReport.mesg = "CALC";
+	calcReport.cqRna = cqRna;
+	_data[ ridx ][ cidx ].setCqRNA( cqRna );
+/* TODO REMOVE THESE THINGS FROM REPORT
 	calcReport.cqRnaCount = cqRnaTab.size();
-	calcReport.cqRna = Mean<double>( cqRnaTab );
 	calcReport.cqRnaSd = SD<double>( cqRnaTab );
 	calcReport.cqDnaCount2 = useable_cqDnaTab.size();
 	calcReport.cqDna2 = Mean<double>( useable_cqDnaTab );
-
+*/
+/*
 	if( cqRnaTab.size() == 0 ) {
 		//
 		// TODO make this a setError condition
@@ -1471,13 +1548,7 @@ if( goi == "gapdh" ) {
 		_data[ ridx ][ cidx ].setCqRNA(
 		  Mean<double>( cqRnaTab ) );
 	}
-if( goi == "gapdh" ) {
-	qDebug() << "CqDNA: " << useable_cqDnaTab;
-	qDebug() << "CqRNA: " << cqRnaTab;
-	qDebug() << "Final CqRNA = " << _data[ridx][cidx].cqRNA();
-	qDebug() << "";
-}
-
+*/
 	/*grade = vpScore( ridx, cidx );
 	
 	_data[ ridx ][ cidx ].setCqDNA( Mean<double>( cqDnaTab ) );
@@ -1612,6 +1683,9 @@ bool	VPStore::run()
 //	IDEALLY ALSO NEED GUI LOGIC SO IF A CHECK PARAM IS CHANGED,
 //	 CHECK HAS TO BE RUN AGAIN
 //
+
+	_calcReport.clear();
+
 	foreach( QString goi, _outputCols ) {
 		// first figure out if this goi is aplus
 		int cidx = colIndex( goi );
@@ -1727,7 +1801,6 @@ void	VPStore::summarizeGoi( GoiSummary *goiSummary )
 	goiSummary->nC = grades.count( VP::FLAG_C );
 	goiSummary->nF = grades.count( VP::FLAG_F );
 	goiSummary->nHIGHDNA = grades.count( VP::FLAG_HIGHDNA );
-	goiSummary->nK0 = grades.count( VP::FLAG_K0 );
 	goiSummary->nND = grades.count( VP::FLAG_ND );
 }
 
@@ -2437,7 +2510,6 @@ qDebug() << "BEWARE A+err is possible";
 		case	VP::AA2:
 		case	VP::AA:
 		case	VP::ASTAR:
-		case	VP::K0:
 		case	VP::NOAMP:
 		case	VP::OVERLOD:
 		case	VP::EXPFAIL:
@@ -2463,11 +2535,14 @@ void	VPStore::outputFileHeader( QTextStream& fp )
 		fp << " " << _inputRows.at( ridx );
 	}
 	fp << endl;
+/* TODO MAKE THIS WORK AGAIN?
+
 	fp << "gDNA concentrations:";
 	foreach( double c, _gDnaConcentrations ) {
 		fp << " " << c;
 	}
 	fp << endl;
+*/
 	fp << "LinReg all-gDNA: slope " << gDnaLR.slope() << "; Eff " << gDnaLR.e() << "; R2 " << gDnaLR.r2() << endl;
 	fp << "LinReg VPA-gDNA: slope " << gDnaVpaLR.slope() << "; Eff " << gDnaVpaLR.e() << "; R2 " << gDnaVpaLR.r2() << endl;
 

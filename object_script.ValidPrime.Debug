@@ -1,0 +1,12 @@
+INPUT(
+./debug/ghLinReg.o
+./debug/ghDilSeries.o
+./debug/vpstore.o
+./debug/window.o
+./debug/myApp.o
+./debug/_main.o
+./debug/moc_window.o
+./debug/moc_myApp.o
+./debug/qrc_help.o
+./debug/qrc_style.o
+);
