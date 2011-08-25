@@ -819,6 +819,13 @@ bool	VPStore::check()
 	// if the checks return critical somewhere, then run state
 	// should not become active
 	//
+/*
+qDebug() << _gDnaRowIndexes;
+qDebug() << _gDnaVpaRowIndexes;
+qDebug() << "INPUT ROWS HAS " << _inputRows.size();
+qDebug() << "First " << _inputRows.at( 0 ) << " and last " << _inputRows.at( _inputRows.size() - 1 );
+qDebug() << rowString( 0 );
+*/
 	return( true );
 }
 LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
@@ -832,6 +839,7 @@ LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
 		return( rv );
 	}
 */
+//qDebug() << "BEGIN " << rowIndexes.size();
 	for( int i = 0; i < rowIndexes.size(); ++i ) {
 		int ridx = rowIndexes.at( i );
 		if( _data[ ridx ][ cidx ].inputFlagged() ) {
@@ -840,6 +848,7 @@ LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
 		x << _gDnaConcMap[ rowString( ridx ) ];
 		//x << log10( concValues.at( i ) );
 		y << _data[ ridx ][ cidx ].input().toDouble();
+//qDebug() << ridx << "\t" << rowString( ridx ) << "\t" << x << "\t" << y;
 	}
 
 /*
@@ -865,6 +874,7 @@ LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
 */
 	rv.setIndexes( rowIndexes );
 	rv.compute( x, y );
+qDebug() << "END " << rv.slope() << "\t" << rv.e() << endl;
 	return( rv );
 }
 bool	VPStore::check_0()
@@ -1265,6 +1275,7 @@ bool	VPStore::check_3()
 		if( minAt != UINT && looSd < allSd ) {
 			_goiSummary[ goi ].gDnaIndexes.removeOne( minAt );
 		}
+qDebug() << "DEBUG getLinReg for " << goi;
 		_goiSummary[goi].linReg =
 		 getLinReg( _goiSummary[ goi ].gDnaIndexes, cidx );
 	}
@@ -1520,6 +1531,9 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 		}
 	}*/
 	cqRna = Kubi( cqNa, cqDna );
+	if( cqRna < 0 ) {
+		qDebug() << "K0 IS STILL POSSIBLE!";
+	}
 
 	calcReport.mesg = "CALC";
 	calcReport.cqRna = cqRna;
@@ -1861,7 +1875,7 @@ QString	VPStore::rowString( const int& index ) const
 {
 	QString	rv;
 
-	if( index > 0 && index < _inputRows.size() ) {
+	if( index >= 0 && index < _inputRows.size() ) {
 		rv = _inputRows.at( index );
 	}
 	return( rv );
@@ -1870,7 +1884,7 @@ QString	VPStore::colString( const int& index ) const
 {
 	QString	rv;
 
-	if( index > 0 && index < _inputCols.size() ) {
+	if( index >= 0 && index < _inputCols.size() ) {
 		rv = _inputCols.at( index );
 	}
 	return( rv );
