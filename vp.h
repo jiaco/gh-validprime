@@ -9,7 +9,7 @@ const	QString	COLUMN_SAMPLE = "SAMPLE";
 
 namespace	VP
 {
-	const QString	VERSION = "v.0.9.3";
+	const QString	VERSION = "v.0.9.4";
 
 	const double	CHECK0_PCTFAIL_CRIT = 0.9;
 	const double	CHECK0_PCTFAIL_WARN = 0.5;
