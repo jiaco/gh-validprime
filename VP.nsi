@@ -3,7 +3,7 @@
 
 Name ValidPrime
 
-OutFile "ValidPrime_installer_v0.9.4.exe"
+OutFile "ValidPrime_installer_v0.9.5.exe"
 
 InstallDir $PROGRAMFILES\GeneHuggers\ValidPrime
 

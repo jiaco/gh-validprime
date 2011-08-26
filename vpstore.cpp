@@ -2077,6 +2077,7 @@ bool	VPStore::parseStepone( const QStringList& lines )
 	int	lnum = 0;
 	const int	CtCol = 6;
 	const QString	STEPONE_NOAMP_FLAG = "undetermined";
+	QString		TARGET_COL = "Target Name";
 
 	QStringList	tokens;
 	Row		row;
@@ -2098,6 +2099,18 @@ bool	VPStore::parseStepone( const QStringList& lines )
 	}
 	tokens[ CtCol ] = "CT";	
 	row.attachHeader( tokens );
+	if( !tokens.contains( TARGET_COL ) ) {
+		for( int i = 0; i < tokens.size(); ++i ) {
+			if( tokens.at( i ).startsWith( "Target" ) ) {
+				TARGET_COL = tokens.at( i );
+				break;
+			}
+		}
+	}
+	if( !tokens.contains( TARGET_COL ) ) {
+		// TODO set error here
+		return( false );
+	}
 	++lnum;
 	dataStart = lnum;
 	int	rowSize = 0;
@@ -2119,8 +2132,8 @@ bool	VPStore::parseStepone( const QStringList& lines )
 		if( !_inputRows.contains( S( row[ "Sample Name" ] ) ) ) {
 			_inputRows << S( row[ "Sample Name" ] );
 		}
-		if( !_inputCols.contains( S( row[ "Target Name" ] ) ) ) {
-			_inputCols << S( row[ "Target Name" ] );
+		if( !_inputCols.contains( S( row[ TARGET_COL ] ) ) ) {
+			_inputCols << S( row[ TARGET_COL ] );
 		}
 	}
 	colSize -= 1;
@@ -2141,7 +2154,7 @@ bool	VPStore::parseStepone( const QStringList& lines )
 	for( lnum = dataStart; lnum < lines.size(); ++lnum ) {
 		row.split( lines.at( lnum ) );
 		int ridx = rowIndex( S( row[ "Sample Name" ] ) );
-		int cidx = colIndex( S( row[ "Target Name" ] ) );
+		int cidx = colIndex( S( row[ TARGET_COL ] ) );
 		if( S( row[ "CT" ] ).isEmpty() ) {
 			_data[ ridx ][ cidx ].setFlag( VP::EXPFAIL );
 			_data[ ridx ][ cidx ].setInputFlagged();
@@ -2557,8 +2570,17 @@ void	VPStore::outputFileHeader( QTextStream& fp )
 	}
 	fp << endl;
 */
-	fp << "LinReg all-gDNA: slope " << gDnaLR.slope() << "; Eff " << gDnaLR.e() << "; R2 " << gDnaLR.r2() << endl;
-	fp << "LinReg VPA-gDNA: slope " << gDnaVpaLR.slope() << "; Eff " << gDnaVpaLR.e() << "; R2 " << gDnaVpaLR.r2() << endl;
+	fp << "LinReg all-gDNA: slope " << gDnaLR.slope()
+	 << "; Eff " << gDnaLR.e()
+	 << "; R2 " << gDnaLR.r2() << endl;
+
+	if( gDnaVpaLR.slope() != 0 && gDnaVpaLR.slope() != gDnaLR.slope() ) {
+		fp << "LinReg VPA-gDNA: slope " << gDnaVpaLR.slope()
+		 << "; Eff " << gDnaVpaLR.e()
+		 << "; R2 " << gDnaVpaLR.r2() << endl;
+	} else {
+		fp << "LinReg VPA-gDNA: same as all-gDNA" << endl;
+	}
 
 	fp << "ValidateAssays: ";
 	if( _validateAssay ) {
@@ -2567,14 +2589,36 @@ void	VPStore::outputFileHeader( QTextStream& fp )
 		fp << "false";
 	}
 	fp << endl;
+
+	fp << "LOO calculation performed: ";
+	if( _performLoo ) {
+		fp << "true";
+	} else {
+		fp << "false";
+	}
+	fp << endl;
+
 	fp << "LOD: " << _LOD << endl;
 	fp << "DeltaCq Min Count: " << _minSdCount << endl;
 	fp << "DeltaCq AllSD Cutoff: " << _highAllSdCutoff << endl;
-	fp << "DeltaCq LooSD Cutoff: " << _highLooSdCutoff << endl;
+	if( _performLoo ) {
+		fp << "DeltaCq LooSD Cutoff: " << _highLooSdCutoff << endl;
+	} else {
+		fp << "DeltaCq LooSD Cutoff: " << "not performed"  << endl;
+	}
 	// PERCENT NOW STORED AS PERCENT
 	fp << "Grade A: " << _gradeA << endl;
 	fp << "Grade B: " << _gradeB << endl;
 	fp << "Grade C: " << _gradeC << endl;
+
+	fp << "A sample correction performed: ";
+	if( _correctA ) {
+		fp << "true";
+	} else {
+		fp << "false";
+	}
+	fp << endl;
+
 	fp << endl;
 }
 bool	VPStore::saveReport( const QString& path )

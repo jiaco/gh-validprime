@@ -26,7 +26,7 @@ namespace	GH
 	addParam( "load/file", "",
 	 ParamModel::File,
 	 tr( "Input File"  ) );
-	addParam( "load/format", VP::FLUID,
+	addParam( "load/format", VP::SIMPLE,
 	 ParamModel::Choice,
 	 tr( "Input Format" ) );
 
@@ -37,7 +37,7 @@ namespace	GH
 	 ParamModel::Boolean,
 	 tr( "Validate Assays? (Is a gDna dilution series present?)" ) );
 
-	addParam( "check/lod", "40.0",
+	addParam( "check/lod", "36.0",
 	 ParamModel::Edit,
 	 tr( "Detection Limit (LOD)" ) );
 
@@ -75,7 +75,7 @@ namespace	GH
 	//	TODO are these params used? or tobedeleted?
 	//
 
-	addParam( "check/minsdcount", "3", 
+	addParam( "check/minsdcount", "4", 
 	 ParamModel::Edit, "Min-Count for SD" );
 	addParam( "check/highallsdcutoff", "0.3",
 	 ParamModel::Edit, "High All-SD Cutoff" );
@@ -460,6 +460,8 @@ bool	MyApp::save()
 			if( f.contains( "allinone" ) ) {
 				Ofp	fp;
 				if( !fp.open( path ) ) {
+					setError( fp.error() );
+					emit( emitError( error() ) );
 					return( false );
 				}
 				role = VP::InOut;
