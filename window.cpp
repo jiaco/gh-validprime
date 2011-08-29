@@ -7,6 +7,11 @@ namespace	GH
 {
 	_myApp = app;
 	setWindowTitle( "ValidPrime" );
+	setHelpText( ":help.html" );
+	setAboutText( QString( "gh-validprime\n"
+			"Version: %1\n"
+			"Author: Jason S. Iacovoni\n"
+		).arg( VP::VERSION ) );
 	//
 	//	centralWidget is the Input Grid
 	//
@@ -56,14 +61,15 @@ namespace	GH
 
 	// from GH::MainWindow
 
+/*
 	resetDefaultsAction()->setShortcut( QKeySequence( tr( "Ctrl+D" ) ) );
 	resetDefaultsAction()->setToolTip(
 	 "Set all parameters to default settings" );
 
-	// PNAME
 	ActionView::Action( this, "help" )->setShortcut(
 	 QKeySequence( QKeySequence::HelpContents ) );
 
+*/
 	//initLogWidget( Qt::Window );
 	//logWidget()->show();
 	//showMessage( Info( "DEBUG ON" ) );
@@ -259,9 +265,11 @@ void	Window::setupActionToolBar()
 	_actionToolBar->addSeparator();
 	_actionToolBar->addWidget( _gridDisplayed );
 	_actionToolBar->addSeparator();
-	_actionToolBar->addAction( ActionView::Action( this, "help" ) );
+	_actionToolBar->addAction( helpAction() );
 
-	_actionToolBar->addAction( resetDefaultsAction() );
+	//_actionToolBar->addAction( ActionView::Action( this, "help" ) );
+
+	//_actionToolBar->addAction( resetDefaultsAction() );
 }
 void	Window::setupMenu()
 {
@@ -272,9 +280,13 @@ void	Window::setupMenu()
 	_viewMenu->addAction( ActionView::Action( this, "view/score" ) );
 	_viewMenu->addAction( ActionView::Action( this, "view/heatmap" ) );
 
+	_helpMenu = appendHelpMenu( tr( "Help" ) );
+
+/*
 	_helpMenu = menuBar()->addMenu( tr( "Help" ) );
 	_helpMenu->addAction( ActionView::Action( this, "about" ) );
 	_helpMenu->addAction( ActionView::Action( this, "help" ) );
+*/
 }
 void	Window::configureParams()
 {
@@ -303,8 +315,10 @@ void	Window::configureParams()
 
 	ActionView::AddListener( this, "save/autoname", _myApp, SLOT( autoNameOutput() ) );
 
+/*
 	ActionView::AddListener( this, "help", this, SLOT( showHelp() ) );
 	ActionView::AddListener( this, "about", this, SLOT( showAbout() ) );
+*/
 	//	CHOICES
 	//
 	ChoiceView::SetChoices( this, "load/format",
@@ -346,6 +360,7 @@ void	Window::configureParams()
          "Select a file to save Log-Report", "" );
 	param( "save/report" )->setCheckable( true );
 }
+/*
 void	Window::showHelp()
 {
 	if( _help ) {
@@ -395,6 +410,7 @@ void	Window::showAbout()
 	_about->setObjectName( "AboutWidget" );
 	_about->show();
 }
+*/
 void	Window::viewHeatMap()
 {
 	switch( _state ) {

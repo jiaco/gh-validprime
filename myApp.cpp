@@ -15,10 +15,11 @@ namespace	GH
 	QString	debugRows = "_75_gDNA 10000,_76_gDNA 5000,_77_gDNA 2500,_78_gDNA 500,_79_gDNA 50,_80_gDNA 5";
 
 
-	// TODO this is not really used, just to test
+	/* TODO this is not really used, just to test
 	addParam( "GridFont", "",
 	 ParamModel::Font,
 	 tr( "Table Font" ) );
+	*/
 
 	//
 	//	LOAD
@@ -158,8 +159,10 @@ namespace	GH
 	addParam( "save", "", ParamModel::Action, tr( "Save" ) );
 	addParam( "reload", "", ParamModel::Action, tr( "Reload" ) );
 	addParam( "recheck", "", ParamModel::Action, tr( "Recheck" ) );
+/*
 	addParam( "help", "", ParamModel::Action, tr( "Help" ) );
 	addParam( "about", "", ParamModel::Action, tr( "About" ) );
+*/
 
 	addParam( "toggle/input", "", ParamModel::Action, tr( "Input" ) );
 	addParam( "toggle/cqrna", "", ParamModel::Action, tr( "CqRNA" ) );

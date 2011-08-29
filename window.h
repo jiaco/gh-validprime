@@ -39,8 +39,9 @@ public slots:
 	void	viewGrid( const VP::DataRole& role );
 	void	toggleGrid( const VP::DataRole& role );
 
-	void	showHelp();
+/*	void	showHelp();
 	void	showAbout();
+*/
 signals:
 	void	statusMessage( const QString& message, int timeout = 0 );
 private:
@@ -77,9 +78,11 @@ private:
 
 	VP::State	_state;
 
+/*
 	QString		_helpText;
 	QWidget		*_help;
 	QWidget		*_about;
+*/
 };
 
 }	//	GH namespace
