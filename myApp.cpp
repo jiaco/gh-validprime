@@ -8,152 +8,243 @@ namespace	GH
 	cout.open( STDOUT );
 	cerr.open( STDERR );
 
-	_inputFormatChoice << VP::FLUID
-	 << VP::SIMPLE << VP::STEPONE << VP::CUSTOM;
-
-	QString	debugRow = "_76_gDNA 5000";
-	QString	debugRows = "_75_gDNA 10000,_76_gDNA 5000,_77_gDNA 2500,_78_gDNA 500,_79_gDNA 50,_80_gDNA 5";
-
-
-	/* TODO this is not really used, just to test
-	addParam( "GridFont", "",
-	 ParamModel::Font,
-	 tr( "Table Font" ) );
-	*/
+	_inputFormatChoice
+		<< VP::FLUID
+		<< VP::SIMPLE
+		<< VP::STEPONE
+		<< VP::CUSTOM;
 
 	//
 	//	LOAD
 	//
-	addParam( "load/file", "",
-	 ParamModel::File,
-	 tr( "Input File"  ) );
-	addParam( "load/format", VP::SIMPLE,
-	 ParamModel::Choice,
-	 tr( "Input Format" ) );
+	addParam( "load/file", ParamModel::File,
+	 "displayName=Input File;"
+	 "toolTip=Text file with PCR data;"
+	 "whatsThis=Input file must be text and formatted"
+	 " according to the specification detailed in the Help;"
+	 "dialogType=open;"
+	 "caption=Select a text file containing input;"
+	 "filter=*.txt;"
+	);
+	addParam( "load/format", ParamModel::Choice,
+	 "displayName=Format;"
+	 "defaultValue=" % VP::SIMPLE % ";"
+	 "toolTip=Specify the format of the input file;"
+	 "whatsThis=For a description of the possible input formats"
+	 " please see the Help;"
+	);
 
 	//
 	//	CHECK
 	//
-	addParam( "check/validate", "true",
-	 ParamModel::Boolean,
-	 tr( "Validate Assays? (Is a gDna dilution series present?)" ) );
+	addParam( "check/validate", ParamModel::Boolean,
+	 "defaultValue=true;"
+	 "displayName=" % tr( "Validate Assays? (Is a gDna dilution series present?)" )  % ";"
+	 "toolTip=Only check this if you have 4 or more gDna samples;"
+	 "whatsThis=In order to best correct for gDna...more text soon!;"
+	);
 
-	addParam( "check/lod", "36.0",
-	 ParamModel::Edit,
-	 tr( "Detection Limit (LOD)" ) );
+	addParam( "check/lod", ParamModel::Edit,
+	 "defaultValue=36.0;"
+	 "displayName=Detection Limit (LOD);"
+	 "toolTip=Limit of Detection (LOD) can be user-specified;"
+	 "whatsThis=...;"
+	 );
 
-	addParam( "check/failflag", "FAIL",
-	 ParamModel::Edit,
-	 tr( "Flag for EXPFAIL" ) );
+	addParam( "check/failflag", ParamModel::Edit,
+	 "defaultValue=FAIL;"
+	 "displayName=User-flag for EXPFAIL;" 
+	 "toolTip=User defined string that will mark a cell as EXPFAIL;"
+	 "whatsThis=If for any reason certain cells should be treated as EXPFAIL,"
+	 " replaces those cells with a specific string (for example 'FAIL')"
+	 " and provide that string for this parameter;"
+	);
 
-	addParam( "check/noampflag", "NOAMP",
-	 ParamModel::Edit,
-	 tr( "Flag for NOAMP" ) );
+	addParam( "check/noampflag", ParamModel::Edit,
+	 "defaultValue=NOAMP;"
+	 "displayName=Flag for NOAMP;"
+	 "toolTip=User defined string that will mark a cell as NOAMP;"
+	 "whatsThis=If for any reason certain cells should be treated as NOAMP,"
+	 " replaces those cells with a specific string (for example 'NOAMP')"
+	 " and provide that string for this parameter;"
+	 );
 
-	addParam( "check/vpacol", "m1qB_2",
-	 ParamModel::Choice | ParamModel::Selector,
-		tr( "Validprime Assay" ) );
-	addParam( "check/gdnarows", debugRows,
-	 ParamModel::Choice | ParamModel::Selector,
-		tr( "gDNA Samples" ) );
+	addParam( "check/vpacol", ParamModel::Choice | ParamModel::Selector,
+	 "displayName=" % tr( "Validprime Assay" ) % ";"
+	 "toolTip=Click Browse to select the column for the VPA;"
+	 "whatsThis=Once input has been loaded, the Browse button will popup"
+	 " a selector widget to enable you to select the VPA column from all"
+	 " column headings found in the input file;"
+	 );
 
-	addParam( "check/parseconc", "true",
-	 ParamModel::Boolean,
-	 tr( "Parse gDNA concentrations from row labels?" ) );
+	addParam( "check/gdnarows", ParamModel::Choice | ParamModel::Selector,
+	 "displayName=" % tr( "gDNA Samples" )  % ";"
+	 "toolTip=Click Browse to select the rows containing gDNA;"
+	 "whatsThis=Once input has been loaded, the Browse button will popup"
+	 " a selector widget to enable you to select gDNA row(s) from all"
+	 " row headings found in the input file;"
+	);
 
-	addParam( "check/gdnaconc", "", ParamModel::Action,
-		tr( "Check/Set [gDNA]" ) );
+	addParam( "check/parseconc", ParamModel::Boolean,
+	 "defaultValue=true;"
+	 "displayName=Parse gDNA concentrations from row labels?;"
+	 "toolTip=Should the program look in the row strings for numeric concentrations?;"
+	 "whatsThis=If you label your gDNA rows with numeric values for each gDNA concentration"
+	 " then the program can automatically parse them. Check the values with the button below"
+	 " to be sure they were parsed correctly;"
+	);
 
-	addParam( "hidden/gdnaconc", "", ParamModel::Choice, "" );
+	addParam( "check/gdnaconc", ParamModel::Action,
+	 "displayName=Check/Set [gDNA];"
+	 "toolTip=Use this button to check and/or set gDNA concentration values;"
+	 "whatsThis=Tiggers a popup widget to check/set gDNA concentrations.<br>"
+	 " If the program parsed gDNA concentrations from the row labels,"
+	 " then you can check those values in the popup widget."
+	 " If your row labels do not contain numeric values, you can enter them in the widget.;"
+	 );
 
-	addParam( "check/ignorecols", "",
-	 ParamModel::Choice | ParamModel::Selector,
-		tr( "Ignore Assays" ) );
-	addParam( "check/ignorerows", "",
-	 ParamModel::Choice | ParamModel::Selector,
-		tr( "Ignore Samples" ) );
+	addParam( "hidden/gdnaconc", ParamModel::Choice, "" );
 
-	//	TODO are these params used? or tobedeleted?
-	//
+	addParam( "check/ignorecols", ParamModel::Choice | ParamModel::Selector,
+	"displayName=Ignore Assays;"
+	"toolTip=Select any columns that should be ignored;"
+	 );
 
-	addParam( "check/minsdcount", "4", 
-	 ParamModel::Edit, "Min-Count for SD" );
-	addParam( "check/highallsdcutoff", "0.3",
-	 ParamModel::Edit, "High All-SD Cutoff" );
+	addParam( "check/ignorerows", ParamModel::Choice | ParamModel::Selector,
+	"displayName=Ignore Samples;"
+	"toolTip=Select any rows that should be ignored;"
+	 );
 
-	addParam( "check/performloo", "false",
-	 ParamModel::Boolean, "Perform LOO" );
-	addParam( "check/highloosdcutoff", "0.2",
-	 ParamModel::Edit, "High LOO-SD Cutoff" );
-/*
-	addParam( "CutMedAll", "0.45",
-	 ParamModel::Edit, "Medium All-SD Limit" );
-	addParam( "CutMedLoo", "0.3",
-	 ParamModel::Edit, "Medium LOO-SD Limit" );
+	addParam( "check/minsdcount", ParamModel::Edit,
+	"defaultValue=4;"
+	"displayName=Min-Count for SD;"
+	"toolTip=Set the minimum number of values required for SD calculations;"
+	"whatsThis=Standard Deviations will only be calculated provided there are"
+	" at least a minimum number of values (default=4);"
+	 );
 
-	// older check params
+	addParam( "check/highallsdcutoff", ParamModel::Edit,
+	"defaultValue=0.3;"
+	"displayName=High All-SD Cutoff;"
+	"toolTip=Set threshold for High confidence using all-values-SD;"
+	"whatsThis=The Standard Deviation will be compared against this value"
+	" in order to determine whether or not the XXX is given High-Confidence;"
+	 );
 
-	addParam( "MinCountSdNa", "3", 
-	 ParamModel::Edit, "Delta-Cq Min-Count" );
-	addParam( "CutoffSdNa", "0.3", 
-	 ParamModel::Edit, "Delta-Cq SD-Cutoff" );
-*/
+	addParam( "check/performloo", ParamModel::Boolean,
+	"defaultValue=false;"
+	"displayName=Perform LOO;"
+	"toolTip=;"
+	"whatsThis=;"
+	 );
+
+	addParam( "check/highloosdcutoff", ParamModel::Edit,
+	 "defaultValue=0.2;"
+	 "displayName=High LOO-SD Cutoff;"
+	 "tooltip=;"
+	 "whatsThis=;"
+	 );
 
 	//
 	//	RUN
 	//
 	addParam( "run/gradea", "3",
 	 ParamModel::Edit,
-	 tr( "Grade A max" ) );
+	 tr( "Grade A max" ),
+	 "tooltip=;"
+	 "whatsThis=;"
+	 );
 	addParam( "run/gradeb", "25",
 	 ParamModel::Edit,
-	 tr( "Grade B max" ) );
+	 tr( "Grade B max" ),
+	 "tooltip=;"
+	 "whatsThis=;"
+	 );
 	addParam( "run/gradec", "60",
 	 ParamModel::Edit,
-	 tr( "Grade C max" ) );
-	addParam( "run/correcta", "false",
-	 ParamModel::Boolean,
-	 tr( "Correct A Samples? (not recommended)" ) );
+	 tr( "Grade C max" ),
+	 "tooltip=;"
+	 "whatsThis=;"
+	 );
+	addParam( "run/correcta", ParamModel::Boolean,
+	 "defaultValue=false;"
+	 "displayName=Correct A Samples? (not recommended);"
+	 "tooltip=;"
+	 "whatsThis=;"
+	 );
 
-/*
-	addParam( "MinCountSdRna", "3", 
-	 ParamModel::Edit, "Delta-CqRNA Min-Count" );
-	addParam( "CutoffSdRna", "0.4", 
-	 ParamModel::Edit, "Delta-CqRNA SD-Cutoff" );
-*/
-
+	//
 	//	SAVE
-/*
-	_saveParams << "OutputFolder" << "AutoNameOutput"
-	<< "FileAllInOne" << "FileCqRNA"
-	<< "FileCqDNA" << "FilePctDNA" << "FileVPScore"
-	<< "FileSummary" << "FileReport";
-*/
+	//
+	addParam( "save/folder", ParamModel::File,
+	 "displayName=Output Folder;" 
+	 "dialogType=dir;"
+	 "caption=Select a folder for all output files;"
+	 );
+	addParam( "save/autoname", ParamModel::Action,
+	 "displayName=Auto-Name;"
+	 "toolTip=Use the output folder plus the input file name to auto-create output file names;"
+	 "whatsThis=Using the file name of the input file and the output folder, the program"
+	 " will automatically generate all file names for the various output files;"
+	 );
 
-	addParam( "save/folder", "",
-	 ParamModel::File, tr( "Output Folder"  ) );
-	addParam( "save/autoname", "",
-	 ParamModel::Action, tr( "Auto-Name" ) );
+	addParam( "save/allinone", ParamModel::File,
+	 "displayName=All-in-One File;"
+	 "dialogType=save;"
+	 "caption=Select an output file for the All-in-One file;"
+	 "checkable=true;"
+	 );
 
-	addParam( "save/allinone", "",
-	 ParamModel::File, tr( "All-in-One File"  ) );
+	addParam( "save/cqrna", ParamModel::File,
+	 "displayName=CqRNA File;"
+	 "dialogType=save;"
+	 "caption=Select an output file for the CqRNA values;"
+	 "checkable=true;"
+	 );
 
-	addParam( "save/cqrna", "",
-	 ParamModel::File, tr( "CqRNA File"  ) );
-	addParam( "save/cqdna", "",
-	 ParamModel::File, tr( "CqDNA File"  ) );
-	addParam( "save/pctdna", "",
-	 ParamModel::File, tr( "PctDNA File"  ) );
-	addParam( "save/vpscore", "",
-	 ParamModel::File, tr( "VPScore File"  ) );
-	addParam( "save/summary", "",
-	 ParamModel::File, tr( "GOI-Summary File"  ) );
-	addParam( "save/report", "",
-	 ParamModel::File, tr( "Report File(Log)"  ) );
+	addParam( "save/cqdna", ParamModel::File,
+	 "displayName=CqDNA File;"
+	 "dialogType=save;"
+	 "caption=Select an output file for the CqDNA values;"
+	 "checkable=true;"
+	 );
+
+	addParam( "save/pctdna", ParamModel::File,
+	 "displayName=PctDNA File;"
+	 "dialogType=save;"
+	 "caption=Select an output file for the %-DNA values;"
+	 "checkable=true;"
+	 );
+
+	addParam( "save/vpscore", ParamModel::File,
+	 "displayName=VPScore File;"
+	 "dialogType=save;"
+	 "caption=Select an output file for the VPScores;"
+	 "checkable=true;"
+	 );
+
+	addParam( "save/summary", ParamModel::File,
+	 "displayName=GOI-Summary File;"
+	 "dialogType=save;"
+	 "caption=Select an output file for the GOI-Summary file;"
+	 "checkable=true;"
+	 );
+
+	addParam( "save/report", ParamModel::File,
+	 "displayName=Report File(Log);"
+	 "dialogType=save;"
+	 "caption=Select an output file for the Report file;"
+	 "checkable=true;"
+	 );
 
 	//	ACTIONS
 	//
-	addParam( "load", "", ParamModel::Action, tr( "Load" ) );
+	addParam( "load", ParamModel::Action,
+	 "displayName=" % tr( "Load" ) % ";"
+	 "toolTip=Load the current input file using current format;"
+	 "whatsThis=Load is the first step of the workflow and uses a parser"
+	 " select by the Format selector and the specified input file;"
+	);
 	addParam( "check", "", ParamModel::Action, tr( "Check" ) );
 	addParam( "run", "", ParamModel::Action, tr( "Run" ) );
 	addParam( "save", "", ParamModel::Action, tr( "Save" ) );

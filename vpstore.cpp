@@ -562,7 +562,8 @@ void	VPCell::setCqRNA( const double& value )
 
 bool	VPStore::preload( CliApp* app )
 {
-	_inputFile = S( app->param( "load/file" )->value() );
+	_inputFile = APP_S( "load/file" );
+	//_inputFile = S( app->param( "load/file" )->value() );
 	_inputFormat = S( app->param( "load/format" )->value() );
 	return( true );
 }

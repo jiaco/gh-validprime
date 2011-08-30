@@ -15,12 +15,6 @@ class	MyApp	:	public	CliApp
 public:
 	MyApp( int argc, char** argv );
 
-/*
-	QStringList	loadParams() const;
-	QStringList	checkParams() const;
-	QStringList	runParams() const;
-	QStringList	saveParams() const;
-*/
 	QStringList	inputFormatChoice() const;
 
 	QStringList	header( const VP::DataRole& role ) const;
@@ -40,7 +34,6 @@ public:
 	QStringList	gDnaConcLabels() const;
 	QList<QVariant>	gDnaConcValues() const;
 	void		gDnaFromUser( const QVariant& values );
-	//void		setState( const VP::State& state );
 
 	QString	getCheckCriticalMesg();
 	QString	getCheckWarningMesg();
@@ -50,6 +43,7 @@ public:
 
 	QString	getCalcInfo( const QString& row, const QString& column,
 		 const VP::State& state = VP::Load ) const;
+
 public slots:
 	void	doit();
 	bool	load();
@@ -61,7 +55,6 @@ public slots:
 	void	autoNameOutput();
 signals:
 	void	setState( const VP::State& state );
-
 	void	postload();
 	void	postcheck( const bool& passed, const QString& dialogMesg );
 	void	postrun();
@@ -69,14 +62,9 @@ private:
 	bool	saveData( const QString& path, VP::DataRole& role );
 	void	writeData( QTextStream& fp, VP::DataRole& role,
 		 const bool& includeHeader = true );
+
 	Ofp	cout, cerr;
-
 	VPStore	store;
-/*
-	QStringList	_loadParams, _checkParams,
-			_runParams, _saveParams;
-*/
-
 	QStringList	_inputFormatChoice;
 };
 

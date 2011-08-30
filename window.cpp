@@ -236,6 +236,8 @@ void	Window::setupActionToolBar()
 	_gridToggle->setToolButtonStyle( Qt::ToolButtonTextOnly );
 	_gridToggle->setPopupMode( QToolButton::MenuButtonPopup );
 	_gridToggle->setText( tr( "Toggle Grid" ) );
+	_gridToggle->setToolTip( "Switch the contents of the Table" );
+
 	QMenu	*gridMenu = new QMenu( tr( "Show Grid" ), this );
 	gridMenu->addAction( ActionView::Action( this, "toggle/input" ) );
 	gridMenu->addAction( ActionView::Action( this, "toggle/cqrna" ) );
@@ -266,10 +268,6 @@ void	Window::setupActionToolBar()
 	_actionToolBar->addWidget( _gridDisplayed );
 	_actionToolBar->addSeparator();
 	_actionToolBar->addAction( helpAction() );
-
-	//_actionToolBar->addAction( ActionView::Action( this, "help" ) );
-
-	//_actionToolBar->addAction( resetDefaultsAction() );
 }
 void	Window::setupMenu()
 {
@@ -281,12 +279,6 @@ void	Window::setupMenu()
 	_viewMenu->addAction( ActionView::Action( this, "view/heatmap" ) );
 
 	_helpMenu = appendHelpMenu( tr( "Help" ) );
-
-/*
-	_helpMenu = menuBar()->addMenu( tr( "Help" ) );
-	_helpMenu->addAction( ActionView::Action( this, "about" ) );
-	_helpMenu->addAction( ActionView::Action( this, "help" ) );
-*/
 }
 void	Window::configureParams()
 {
@@ -315,10 +307,6 @@ void	Window::configureParams()
 
 	ActionView::AddListener( this, "save/autoname", _myApp, SLOT( autoNameOutput() ) );
 
-/*
-	ActionView::AddListener( this, "help", this, SLOT( showHelp() ) );
-	ActionView::AddListener( this, "about", this, SLOT( showAbout() ) );
-*/
 	//	CHOICES
 	//
 	ChoiceView::SetChoices( this, "load/format",
@@ -326,6 +314,7 @@ void	Window::configureParams()
 
 	//	FILES
 	//
+/*
         FileView::Configure( this, "load/file", FileView::Open,
          "Select your text input file", "*.txt" );
 
@@ -359,58 +348,8 @@ void	Window::configureParams()
         FileView::Configure( this, "save/report", FileView::Save,
          "Select a file to save Log-Report", "" );
 	param( "save/report" )->setCheckable( true );
-}
-/*
-void	Window::showHelp()
-{
-	if( _help ) {
-		_help->show();
-		return;
-	}
-	if( _helpText.isEmpty() ) {
-		_helpText = Ifp::load( ":help.html" );
-	}
-	_help = new QWidget( 0, Qt::Window );
-
-	QGridLayout *lay = new QGridLayout;
-	QScrollArea	*sa = new QScrollArea;
-
-	QLabel		*lbl = new QLabel( this );
-
-	lbl->setText( _helpText );
-	lbl->setWordWrap( true );
-	sa->setWidget( lbl );
-	lay->addWidget( sa, 0, 0 );
-	_help->setLayout( lay );
-
-	_help->setObjectName( "HelpWidget" );
-	_help->show();
-}
-void	Window::showAbout()
-{
-	if( _about ) {
-		_about->show();
-		return;
-	}
-	_about = new QWidget( 0, Qt::Window );
-
-	QString	s;
-	QLabel	*lbl = new QLabel( this );
-	QGridLayout *lay = new QGridLayout;
-
-	s = QString( "gh-validprime\n"
-			"Version: %1\n"
-			"Author: Jason S. Iacovoni\n"
-		).arg( VP::VERSION );
-
-	lbl->setText( s );
-	lay->addWidget( lbl, 0, 0 );
-	_about->setLayout( lay );
-
-	_about->setObjectName( "AboutWidget" );
-	_about->show();
-}
 */
+}
 void	Window::viewHeatMap()
 {
 	switch( _state ) {
