@@ -25,16 +25,20 @@ double	DilutionPoint::SnarfConc( const QString& label )
 	bool	ok;
 	double	rv = -1;	// cannot have negative conc
 	QString	s, t;
-	s = label;
+
+	//s = label;
+	s = VP::DeUniqueLabel( label );
 	t = "";
 	// in ValidPrime, mulitple rows can have the same label
 	// so a numeric id is prefixed to the row label
 	//	like : "_75_Label"
 	// this needs to be ignored in order to snarf the conc
 	//
+/*
 	if( s.startsWith( '_' ) ) {
 		s = s.mid( s.indexOf( '_', 1 ) );
 	}
+*/
 	foreach( QChar ch, s ) {
 		if( ch.isDigit() ) {
 			t.append( ch );

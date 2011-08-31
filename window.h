@@ -23,6 +23,7 @@ public slots:
 	void	centralGridClicked( const QVariant& row, const QVariant& column );
 
 	void	getUserConc();
+	void	getUserStepOne();
 
 	void	viewCqRna();
 	void	viewCqDna();

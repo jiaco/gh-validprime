@@ -1890,12 +1890,14 @@ QString	VPStore::colString( const int& index ) const
 	}
 	return( rv );
 }
+/*
 QString	VPStore::uniqueRowLabel( const Row& row ) const
 {
 	//return( QString( "%2_Row_%1" ).arg( S( row[ COLUMN_NID ] ) )
 	return( QString( "_%1_%2" ).arg( S( row[ COLUMN_NID ] ) )
 		.arg( S( row[ COLUMN_SAMPLE ] ) ) ); 
 }
+*/
 VP::Flag VPStore::getFlag( const QString& rowname, const QString& colname )
 {
 	int	r = rowIndex( rowname );
@@ -1981,7 +1983,7 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
                 ++lnum;
         }
         if( lnum >= lines.size() - 1 ) {
-		setCritical( "Fluidigm parser failed to parse input file" );
+		setCritical( "Biomark parser failed to distinguish header and data in input" );
                 return( false );
         }
 	save1 = lines.at( lnum );
@@ -2013,18 +2015,22 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
                         break;
                 }
                 row.split( lines.at( lnum ) );
-                rlabel = uniqueRowLabel( row );
+		rlabel = VP::UniqueLabel( S( row[ COLUMN_SAMPLE ] ), I( row[ COLUMN_NID ] ) );
+                //rlabel = uniqueRowLabel( row );
                 if( !_inputRows.contains( rlabel ) ) {
                         _inputRows << rlabel;
                 }
         }
 	if( !newData() ) {
+		setCritical(
+		 QString( "Biomark parse error: newData() failed." ) );
 		return( false );
 	}
         for( lnum = dataStart; lnum < lines.size() &&
 	 lnum < dataStart + _inputRows.size(); ++lnum ) {
                 row.split( lines.at( lnum ) );
-                rlabel = uniqueRowLabel( row );
+		rlabel = VP::UniqueLabel( S( row[ COLUMN_SAMPLE ] ), I( row[ COLUMN_NID ] ) );
+                //rlabel = uniqueRowLabel( row );
 		ridx = rowIndex( rlabel );
                 for( int j = 0; j < _inputCols.size(); ++j ) {
 			QString	clabel = _inputCols.at( j );
@@ -2042,7 +2048,8 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
         for( ; lnum < lines.size() &&
 	 lnum < qualityStart + _inputRows.size(); ++lnum ) {
                 row.split( lines.at( lnum ) );
-                rlabel = uniqueRowLabel( row );
+		rlabel = VP::UniqueLabel( S( row[ COLUMN_SAMPLE ] ), I( row[ COLUMN_NID ] ) );
+                //rlabel = uniqueRowLabel( row );
 		ridx = rowIndex( rlabel );
 		if( ridx == UINT ) {
 			++nWarn;
@@ -2075,32 +2082,65 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
 }
 bool	VPStore::parseStepone( const QStringList& lines )
 {
-	int	lnum = 0;
-	const int	CtCol = 6;
-	const QString	STEPONE_NOAMP_FLAG = "undetermined";
-	QString		TARGET_COL = "Target Name";
+	int	CT_POS = APP_I( "stepone/col_ct" );
+	QString	COL_CT = "Ct";
+	QString	COL_WELL = APP_S( "stepone/col_well" );
+	QString	COL_SAMPLE = APP_S( "stepone/col_sample" );
+	QString	COL_TARGET = APP_S( "stepone/col_target" );
+	QString	SO_NOAMP = APP_S( "stepone/noamp_flag" ).toLower();
 
+	int	lnum = 0;
 	QStringList	tokens;
 	Row		row;
 	int	dataStart = UINT;
 
 	for( ; lnum < lines.size() && !lines.at( lnum ).isEmpty(); ++lnum ) {
-		;	// used to capture the header
+		;	// used to skip(could capture) the header
 	}
 	for( ; lnum < lines.size() && lines.at( lnum ).isEmpty(); ++lnum ) {
 		;	// skip empty lines after header
 	}
 	if( lnum >= lines.size() ) {
+		setCritical(
+		 QString( "StepOne parse error: "
+		 "file ended after %1 lines of header" )
+		 .arg( lnum ) );
 		return( false );
 	}
 	tokens = lines.at( lnum ).split( "\t" );
 	row.setSeparator( "\t" );
-	if( tokens.size() < CtCol ) {
+	if( tokens.size() < CT_POS ) {
+		setCritical(
+		 QString( "StepOne parse error: "
+		 "header line too short %1 tokens found" )
+		 .arg( tokens.size() ) );
 		return( false );
 	}
-	tokens[ CtCol ] = "CT";	
+	tokens[ CT_POS ] = COL_CT;
+	if( !tokens.contains( COL_WELL ) ) {
+		setCritical(
+		 QString( "StepOne parse error: "
+		 "header line missing '%1' Well token" )
+		 .arg( COL_WELL ) );
+		return( false );
+	}
+	if( !tokens.contains( COL_SAMPLE ) ) {
+		setCritical(
+		 QString( "StepOne parse error: "
+		 "header line missing '%1' Sample token" )
+		 .arg( COL_SAMPLE ) );
+		return( false );
+	}
+	if( !tokens.contains( COL_TARGET ) ) {
+		setCritical(
+		 QString( "StepOne parse error: "
+		 "header line missing '%1' Target token" )
+		 .arg( COL_TARGET ) );
+		return( false );
+	}
 	row.attachHeader( tokens );
-	if( !tokens.contains( TARGET_COL ) ) {
+/*
+	if( !tokens.contains( COL_TARGET ) ) {
 		for( int i = 0; i < tokens.size(); ++i ) {
 			if( tokens.at( i ).startsWith( "Target" ) ) {
 				TARGET_COL = tokens.at( i );
@@ -2112,13 +2152,14 @@ bool	VPStore::parseStepone( const QStringList& lines )
 		// TODO set error here
 		return( false );
 	}
+*/
 	++lnum;
 	dataStart = lnum;
 	int	rowSize = 0;
 	int	colSize = 0;
 	for( ; lnum < lines.size(); ++lnum ) {
 		row.split( lines.at( lnum ) );
-		QString	well = S( row[ "Well" ] );
+		QString	well = S( row[ COL_WELL ] );
 		QChar	colCh = well.at( 0 );
 		// let both be 1-based
 		int	colInt = well.mid( 1 ).toInt();
@@ -2130,11 +2171,11 @@ bool	VPStore::parseStepone( const QStringList& lines )
 		if( colInt > colSize ) {
 			colSize = colInt;
 		}
-		if( !_inputRows.contains( S( row[ "Sample Name" ] ) ) ) {
-			_inputRows << S( row[ "Sample Name" ] );
+		if( !_inputRows.contains( S( row[ COL_SAMPLE ] ) ) ) {
+			_inputRows << S( row[ COL_SAMPLE ] );
 		}
-		if( !_inputCols.contains( S( row[ TARGET_COL ] ) ) ) {
-			_inputCols << S( row[ TARGET_COL ] );
+		if( !_inputCols.contains( S( row[ COL_TARGET ] ) ) ) {
+			_inputCols << S( row[ COL_TARGET ] );
 		}
 	}
 	colSize -= 1;
@@ -2150,23 +2191,25 @@ bool	VPStore::parseStepone( const QStringList& lines )
 		}
 	}
 	if( !newData() ) {
+		setCritical(
+		 QString( "StepOne parse error: newData() failed." ) );
 		return( false );
 	}
 	for( lnum = dataStart; lnum < lines.size(); ++lnum ) {
 		row.split( lines.at( lnum ) );
-		int ridx = rowIndex( S( row[ "Sample Name" ] ) );
-		int cidx = colIndex( S( row[ TARGET_COL ] ) );
-		if( S( row[ "CT" ] ).isEmpty() ) {
+		int ridx = rowIndex( S( row[ COL_SAMPLE ] ) );
+		int cidx = colIndex( S( row[ COL_TARGET ] ) );
+		if( S( row[ COL_CT ] ).isEmpty() ) {
 			_data[ ridx ][ cidx ].setFlag( VP::EXPFAIL );
 			_data[ ridx ][ cidx ].setInputFlagged();
 			continue;
 		}
-		if( S( row[ "CT" ] ).toLower() == STEPONE_NOAMP_FLAG ) {
+		if( S( row[ COL_CT ] ).toLower() == SO_NOAMP ) {
 			_data[ ridx ][ cidx ].setFlag( VP::NOAMP );
 			_data[ ridx ][ cidx ].setInputFlagged();
 			continue;
 		}
-		_data[ ridx ][ cidx ].setInput( D( row[ "CT" ] ) );
+		_data[ ridx ][ cidx ].setInput( D( row[ COL_CT ] ) );
 	}
 	return( true );
 }

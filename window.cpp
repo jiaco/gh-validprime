@@ -152,6 +152,15 @@ void	Window::setState( const VP::State& state )
 	}
 	_state = state;
 }
+void	Window::getUserStepOne()
+{
+	QGridLayout	*lay = new QGridLayout;
+	QWidget		*w = NonModalWindow( this );
+
+	w->setLayout( lay );
+	pui( lay, _myApp->paramNames( "stepone" ) );
+	w->show();
+}
 void	Window::getUserConc()
 {
 	if( _myApp->gDnaReady() ) {
@@ -284,6 +293,8 @@ void	Window::configureParams()
 {
 	//	ACTIONS
 	//
+	ActionView::AddListener( this, "load/configurestepone",
+	  this, SLOT( getUserStepOne() ) );
 	ActionView::AddListener( this, "load", _myApp, SLOT( load() ) );
 	ActionView::AddListener( this, "check", _myApp, SLOT( check() ) );
 	ActionView::AddListener( this, "run", _myApp, SLOT( run() ) );

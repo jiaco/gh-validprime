@@ -217,7 +217,7 @@ private:
 	QString	colString( const int& index ) const;
 
 
-	QString	uniqueRowLabel( const Row& row ) const;
+	//QString	uniqueRowLabel( const Row& row ) const;
 	void	setInput( const QString& rowname, const QString& colname,
 		 const QVariant& value );
 

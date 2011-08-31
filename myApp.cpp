@@ -33,6 +33,8 @@ namespace	GH
 	 "whatsThis=For a description of the possible input formats"
 	 " please see the Help;"
 	);
+	addParam( "load/configurestepone", ParamModel::Action,
+	 "displayName=Configure StepOne;" );
 
 	//
 	//	CHECK
@@ -289,6 +291,25 @@ namespace	GH
 	 ParamModel::Color, tr( "Color NOAMP" ) );
 	addParam( "heatmap/coloroverlod", "#000000",
 	 ParamModel::Color, tr( "Color OVERLOD" ) );
+
+	//
+	//	STEPONE
+	//
+	addParam( "stepone/col_well", ParamModel::Edit,
+	 "displayName=Well Column;"
+	 "defaultValue=Well;" );
+	addParam( "stepone/col_sample", ParamModel::Edit,
+	 "displayName=Sample Column;"
+	 "defaultValue=Sample Name;" );
+	addParam( "stepone/col_target", ParamModel::Edit,
+	 "displayName=Target Column;"
+	 "defaultValue=Target Name;" );
+	addParam( "stepone/col_ct", ParamModel::Edit,
+	 "displayName=Ct Column (#);"
+	 "defaultValue=6;" );
+	addParam( "stepone/noamp_flag", ParamModel::Edit,
+	 "displayName=NOAMP Flag;"
+	 "defaultValue=undetermined;" );
 /*
 	addParam( "heatmap/colorf", "#cc0000",
 	 ParamModel::Color, tr( "Color F" ) );

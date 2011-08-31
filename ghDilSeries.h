@@ -1,6 +1,7 @@
 #ifndef	GH_DILSERIES_H
 #define	GH_DILSERIES_H
 #include "GhCore.h"
+#include "vp.h"
 
 namespace	GH
 {

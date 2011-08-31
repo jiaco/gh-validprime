@@ -14,9 +14,9 @@ namespace	VP
 	const double	CHECK0_PCTFAIL_CRIT = 0.9;
 	const double	CHECK0_PCTFAIL_WARN = 0.5;
 	const QString	CRIT_MESG_ERRORCELLS =
-	 "Critical: %1%% of input cells not properly parsed";
-	const QString	CHECK0_CRIT_MESG = "Critical: %1%% of input cells are Over-LOD";
-	const QString	CHECK0_WARN_MESG = "Warning: %1%% of input cells are Over-LOD";
+	 "Critical: %1 input cells not properly parsed";
+	const QString	CHECK0_CRIT_MESG = "Critical: %1% of input cells are Over-LOD";
+	const QString	CHECK0_WARN_MESG = "Warning: %1% of input cells are Over-LOD";
 
 	const QString	CHECK1_CRIT_MESG = "Critical: all gDna-VPA data is flagged, cannot proceed";
 	const QString	CHECK1_WARN_MESG = "Warning: %1 out of %2 gDna points removed due to flags in VPA column";
@@ -73,6 +73,18 @@ namespace	VP
 	const QString	SIMPLE = "Spreadsheet";
 	const QString	STEPONE = "Abi-StepOne";
 	const QString	CUSTOM = "Custom";
+
+inline	QString		DeUniqueLabel( const QString& text )
+{
+	QString rv = text;
+
+	rv = rv.remove( QRegExp( "(#\\d\\d?)" ) );
+	return( rv );
+}
+inline	QString		UniqueLabel( const QString& text, const int& num )
+{
+	return( QString( "%1 (#%2)" ).arg( text ).arg( num ) );
+}
 
 inline	QVariant	VD( const double& value )
 {
