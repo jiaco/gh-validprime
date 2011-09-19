@@ -47,6 +47,7 @@ public:
 public slots:
 	void	doit();
 	bool	load();
+	bool	loadDemo();
 	bool	check();
 	bool	run();
 	bool	save();

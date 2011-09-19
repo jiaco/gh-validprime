@@ -74,7 +74,7 @@ private:
 	QToolBar	*_actionToolBar;
 	QToolButton	*_gridToggle;
 	QLabel		*_gridDisplayed;
-	QMenu		*_viewMenu, *_helpMenu;
+	QMenu		*_fileMenu, *_viewMenu, *_helpMenu;
 	QStatusBar	*_statusBar;
 
 	VP::State	_state;

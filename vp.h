@@ -38,7 +38,7 @@ namespace	VP
 	const QString	FLAG_HIGHDNA = "HIGHDNA";
 	const QString	FLAG_HIGHSD = "HIGHSD";
 	const QString	FLAG_NOAMP = "NOAMP";
-	const QString	FLAG_OVERLOD = "OVERLOD";
+	const QString	FLAG_OVERLOD = "LOWSIGNAL";
 	const QString	FLAG_EXPFAIL = "EXPFAIL";
 	const QString	FLAG_ND = "ND";
 

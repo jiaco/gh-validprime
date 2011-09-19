@@ -280,6 +280,10 @@ void	Window::setupActionToolBar()
 }
 void	Window::setupMenu()
 {
+	_fileMenu = menuBar()->addMenu( tr( "File" ) );
+	_fileMenu->addAction( ActionView::Action( this, "load/demo" ) );
+	//_fileMenu->addAction( ActionView::Action( this, "load/file" ) );
+
 	_viewMenu = menuBar()->addMenu( tr( "View" ) );
 	_viewMenu->addAction( ActionView::Action( this, "view/cqrna" ) );
 	_viewMenu->addAction( ActionView::Action( this, "view/cqdna" ) );
@@ -293,6 +297,7 @@ void	Window::configureParams()
 {
 	//	ACTIONS
 	//
+	ActionView::AddListener( this, "load/demo", _myApp, SLOT( loadDemo() ) );
 	ActionView::AddListener( this, "load/configurestepone",
 	  this, SLOT( getUserStepOne() ) );
 	ActionView::AddListener( this, "load", _myApp, SLOT( load() ) );

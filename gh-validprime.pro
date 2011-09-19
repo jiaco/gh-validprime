@@ -3,7 +3,9 @@ TGT="ValidPrime"
 
 CONFIG += gh gui
 
-RESOURCES += resources/help.qrc
+RESOURCES +=\
+	resources/help.qrc	\
+	resources/demo.qrc	\
 
 HEADERS +=\
 	ghLinReg.h	\

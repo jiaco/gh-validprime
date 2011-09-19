@@ -17,6 +17,17 @@ namespace	GH
 	//
 	//	LOAD
 	//
+	addParam( "_load/demofile", ParamModel::File,
+	 "displayName=Demo Input;"
+	 "defaultValue=:sample1.txt;"
+	 );
+	addParam( "_load/demoformat", ParamModel::Choice,
+	 "diplayName=Demo Format;"
+	 "defaultValue=" % VP::SIMPLE % ";"
+	 );
+	addParam( "load/demo", ParamModel::Action,
+	 "displayName=Load Demo;"
+	 );
 	addParam( "load/file", ParamModel::File,
 	 "displayName=Input File;"
 	 "toolTip=Text file with PCR data;"
@@ -47,10 +58,10 @@ namespace	GH
 	);
 
 	addParam( "check/lod", ParamModel::Edit,
-	 "defaultValue=36.0;"
-	 "displayName=Detection Limit (LOD);"
-	 "toolTip=Limit of Detection (LOD) can be user-specified;"
-	 "whatsThis=...;"
+	 "defaultValue=40.0;"
+	 "displayName=Cq cutoff;"
+	 "toolTip=Cutoff whereby Cq values will be flagged LOWSIGNAL;"
+	 "whatsThis=High Cq values can be filtered by setting this value;"
 	 );
 
 	addParam( "check/failflag", ParamModel::Edit,
@@ -283,6 +294,10 @@ namespace	GH
 	 ParamModel::Color, tr( "Color C" ) );
 	addParam( "heatmap/colorf", "#ff6600",
 	 ParamModel::Color, tr( "Color F" ) );
+/*	HIGHDNA IS AN F
+	addParam( "heatmap/colorhighdna", "#330000",
+	 ParamModel::Color, tr( "Color HIGHDNA" ) );
+*/
 	addParam( "heatmap/colorhighsd", "#330000",
 	 ParamModel::Color, tr( "Color HIGHSD" ) );
 	addParam( "heatmap/colorexpfail", "#000000",
@@ -290,7 +305,7 @@ namespace	GH
 	addParam( "heatmap/colornoamp", "#000000",
 	 ParamModel::Color, tr( "Color NOAMP" ) );
 	addParam( "heatmap/coloroverlod", "#000000",
-	 ParamModel::Color, tr( "Color OVERLOD" ) );
+	 ParamModel::Color, tr( "Color LOWSIGNAL" ) );
 
 	//
 	//	STEPONE
@@ -461,6 +476,34 @@ void	MyApp::doit()
 	load();
 	check();
 	run();
+}
+bool	MyApp::loadDemo()
+{
+	bool	rv = true;
+	clearError();
+
+	if( !store.load( APP_S( "_load/demofile" ),
+	 APP_S( "_load/demoformat" ) ) ) {
+		setError( store.error() );
+		store.clearError();
+		if( errorType() == Error::Crit ) {
+			rv = false;
+		}
+		emit( emitError( error() ) );
+	}
+	if( rv ) {
+		setParamValue( "check/validate", true );
+		setParamValue( "check/vpacol", "mVPA1" );
+		setParamValue( "check/gdnarows",
+		V( QStringList()
+			<< "gDNA 2400 (#10)"
+			<< "gDNA 800 (#9)"
+			<< "gDNA 200 (#8)"
+			<< "gDNA 50 (#7)"
+		 ) );
+		emit( setState( VP::Check ) );
+	}
+	return( true );
 }
 bool	MyApp::load()
 {

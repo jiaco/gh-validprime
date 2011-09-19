@@ -136,6 +136,7 @@ public:
 
 	bool	preload( CliApp* app );
 	bool	load();
+	bool	load( const QString& file, const QString& format );
 	bool	precheck( CliApp* app );
 	bool	check();
 	bool	prerun( CliApp* app );

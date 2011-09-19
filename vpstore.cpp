@@ -304,6 +304,7 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 				case	VP::NOAMP:
 				case	VP::OVERLOD:
 				case	VP::HIGHSD:
+				case	VP::ND:
 					return( V( flagString() ) );
 					break;
 				case	VP::AA3:
@@ -316,6 +317,9 @@ QVariant	VPCell::data( const VP::DataRole& role ) const
 					if( _grade == VP::FLAG_F ) {
 						return( V( VP::FLAG_HIGHDNA ) );
 					} else {
+if( cqRNA() == VP::FLAG ) {
+	qDebug() << "999 has " << flagString();
+}
 						return( cqRNA() );
 					}
 /*
@@ -482,6 +486,13 @@ QVariant	VPCell::input() const
 void	VPCell::setInput( const QVariant& value )
 {
 	_input = value;
+/*
+	if( _input == VP::FLAG ) {
+qDebug() << "HERE WE ALSO CATCH IT";
+		setInputFlagged( true );
+		setFlag( VP::EXPFAIL );
+	}
+*/
 }
 bool	VPCell::inputFlagged() const
 {
@@ -516,6 +527,11 @@ QString	VPCell::grade() const
 }
 double	VPCell::cqRNA() const
 {
+/*
+	if( _cqRNA == 999 ) {
+		qDebug() << "Caught it";
+	}
+*/
 	return( _cqRNA );
 }
 void	VPCell::setFlag( const VP::Flag& flag )
@@ -562,9 +578,12 @@ void	VPCell::setCqRNA( const double& value )
 
 bool	VPStore::preload( CliApp* app )
 {
+	Q_UNUSED( app );
+
 	_inputFile = APP_S( "load/file" );
+	_inputFormat = APP_S( "load/format" );
 	//_inputFile = S( app->param( "load/file" )->value() );
-	_inputFormat = S( app->param( "load/format" )->value() );
+	//_inputFormat = S( app->param( "load/format" )->value() );
 	return( true );
 }
 	//	precheck is also called by gDnaReady()
@@ -820,13 +839,6 @@ bool	VPStore::check()
 	// if the checks return critical somewhere, then run state
 	// should not become active
 	//
-/*
-qDebug() << _gDnaRowIndexes;
-qDebug() << _gDnaVpaRowIndexes;
-qDebug() << "INPUT ROWS HAS " << _inputRows.size();
-qDebug() << "First " << _inputRows.at( 0 ) << " and last " << _inputRows.at( _inputRows.size() - 1 );
-qDebug() << rowString( 0 );
-*/
 	return( true );
 }
 LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
@@ -840,7 +852,6 @@ LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
 		return( rv );
 	}
 */
-//qDebug() << "BEGIN " << rowIndexes.size();
 	for( int i = 0; i < rowIndexes.size(); ++i ) {
 		int ridx = rowIndexes.at( i );
 		if( _data[ ridx ][ cidx ].inputFlagged() ) {
@@ -849,7 +860,6 @@ LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
 		x << _gDnaConcMap[ rowString( ridx ) ];
 		//x << log10( concValues.at( i ) );
 		y << _data[ ridx ][ cidx ].input().toDouble();
-//qDebug() << ridx << "\t" << rowString( ridx ) << "\t" << x << "\t" << y;
 	}
 
 /*
@@ -875,7 +885,6 @@ LinReg	VPStore::getLinReg( const QList<int>& rowIndexes,
 */
 	rv.setIndexes( rowIndexes );
 	rv.compute( x, y );
-qDebug() << "END " << rv.slope() << "\t" << rv.e() << endl;
 	return( rv );
 }
 bool	VPStore::check_0()
@@ -1276,7 +1285,6 @@ bool	VPStore::check_3()
 		if( minAt != UINT && looSd < allSd ) {
 			_goiSummary[ goi ].gDnaIndexes.removeOne( minAt );
 		}
-qDebug() << "DEBUG getLinReg for " << goi;
 		_goiSummary[goi].linReg =
 		 getLinReg( _goiSummary[ goi ].gDnaIndexes, cidx );
 	}
@@ -1403,6 +1411,7 @@ bool	VPStore::preheatmap( CliApp *app )
 	_cmap->insert( VP::FLAG_AA2, CLR( app->param( "heatmap/coloraplus" )->value() ) );
 	_cmap->insert( VP::FLAG_AA, CLR( app->param( "heatmap/coloraplus" )->value() ) );
 	_cmap->insert( VP::FLAG_ASTAR, CLR( app->param( "heatmap/colorastar" )->value() ) );
+	//_cmap->insert( VP::FLAG_HIGHDNA, CLR( app->param( "heatmap/colorhighdna" )->value() ) );
 	_cmap->insert( VP::FLAG_HIGHSD, CLR( app->param( "heatmap/colorhighsd" )->value() ) );
 	_cmap->insert( VP::FLAG_NOAMP, CLR( app->param( "heatmap/colornoamp" )->value() ) );
 	_cmap->insert( VP::FLAG_OVERLOD, CLR( app->param( "heatmap/coloroverlod" )->value() ) );
@@ -1438,6 +1447,7 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	if( !_goiSummary.contains( goi ) ) {
 		// maybe this should have a different flag?
 		// basically there was a fail in check_3 no gDnas for the GOI
+qDebug() << "ND SET VIA NO GOI IN SUMMARY " << goi;
 		_data[ ridx ][ cidx ].setFlag( VP::ND );
 		calcReport.mesg = "GoiSummary missing this GOI";
 
@@ -1503,6 +1513,9 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 	if( _correctA  == false && 
 	 _data[ ridx ][ cidx ].grade() == VP::FLAG_A ) {
 		calcReport.mesg = "NOCALC";
+if( cqNa == 999 ) {
+	qDebug() << "HERE WE HAVE A 999 going into CqRNA";
+}
 		_data[ ridx ][ cidx ].setCqRNA( cqNa );
 		// GRADE A WILL OPTIONALLY OUTPUT CqNA
 		goto CALC_DONE;
@@ -1538,6 +1551,9 @@ bool	VPStore::calc( const QString& goi, const QString& sample )
 
 	calcReport.mesg = "CALC";
 	calcReport.cqRna = cqRna;
+if( cqRna == 999 ) {
+	qDebug() << "HERE WE HAVE A 999 going into CqRNA";
+}
 	_data[ ridx ][ cidx ].setCqRNA( cqRna );
 /* TODO REMOVE THESE THINGS FROM REPORT
 	calcReport.cqRnaCount = cqRnaTab.size();
@@ -1711,9 +1727,13 @@ bool	VPStore::run()
 				int	ridx = rowIndex( sample );
 				_data[ ridx ][ cidx ].setFlag( VP::ERROR );
 			}
+qDebug() << "run() continues as " << goi << " is not in summary";
 			continue;
 		}
 		if( _goiSummary[ goi ].isFlagged() ) {
+if( goi == "36B4" ) {
+	qDebug() << goi << " is flagged";
+}
 			switch( _goiSummary[ goi ]._flag ) {
 				case	VP::APLUS3:
 					foreach( QString sample, _outputRows ) {
@@ -1779,6 +1799,9 @@ bool	VPStore::run()
 				int	ridx = rowIndex( sample );
 				if( !_data[ ridx ][ cidx ].inputFlagged() ) {
 					if( _failSamples.contains( sample ) ) {
+if( goi == "36B4" ) {
+	qDebug() << "FAIL Have " << ridx << " for " << sample;
+}
 						_data[ ridx ][ cidx ].setFlag( VP::ND );
 					} else if( _astarSamples.contains( sample ) ) {
 						_data[ ridx ][ cidx ].setFlag( VP::ASTAR );
@@ -1786,7 +1809,11 @@ bool	VPStore::run()
 					} else {
 						calc( goi, sample );
 					}
+				} else {
+if( goi == "36B4" ) {
+	qDebug() << " UGH Have " << ridx << " for " << sample;
 				}
+}
 			}
 		}
 		summarizeGoi( &_goiSummary[ goi ] );
@@ -1928,7 +1955,12 @@ void	VPStore::setInput( const QString& rowname, const QString& colname,
 		_data[ r ][ c ].setFlag( flag );
 	}
 }
-
+bool	VPStore::load( const QString& file, const QString& format )
+{
+	_inputFile = file;
+	_inputFormat = format;
+	return( load() );
+}
 bool	VPStore::load()
 {
 	bool	rv = false;
@@ -2242,7 +2274,8 @@ bool	VPStore::parseSpreadsheet( const QStringList& lines )
                         break;
                 }
                 row.split( lines.at( lnum ) );
-                rlabel = QString( "_%1_%2" ).arg( lnum ).arg( S( row[ tokens.at( 0 ) ] ) );
+		rlabel = VP::UniqueLabel( S( row[ tokens.at( 0 ) ] ), lnum );
+   //rlabel = QString( "_%1_%2" ).arg( lnum ).arg( S( row[ tokens.at( 0 ) ] ) );
                 if( !_inputRows.contains( rlabel ) ) {
                         _inputRows << rlabel;
                 }
@@ -2253,7 +2286,8 @@ bool	VPStore::parseSpreadsheet( const QStringList& lines )
         // _cols cannot have ID at col-0 to make a C-style double array
         for( lnum = dataStart; lnum < dataStart + _inputRows.size(); ++lnum ) {
                 row.split( lines.at( lnum ) );
-                rlabel = QString( "_%1_%2" ).arg( lnum ).arg( S( row[ tokens.at( 0 ) ] ) );
+		rlabel = VP::UniqueLabel( S( row[ tokens.at( 0 ) ] ), lnum );
+   //rlabel = QString( "_%1_%2" ).arg( lnum ).arg( S( row[ tokens.at( 0 ) ] ) );
 		int	ridx = rowIndex( rlabel );
                 for( int j = 0; j < _inputCols.size(); ++j ) {
 			if( IsFluidigmNoamp( row[ _inputCols.at( j ) ] ) ) {
