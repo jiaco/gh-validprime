@@ -88,7 +88,7 @@ void	GoiSummary::show( QTextStream& fp )
 	 << "\t" << nB
 	 << "\t" << nC
 	 << "\t" << nF
-	 << "\t" << nHIGHDNA
+	// << "\t" << nHIGHDNA
 	 << "\t" << nND
 	 << endl;
 }
@@ -172,11 +172,13 @@ void	VPStore::showGoiSummaryTransposed( QTextStream& fp )
 		fp << "\t" << _goiSummary[ goi ].nF;
 	}
 	fp << endl;
+/*
 	fp << "nHIGHDNA";
 	foreach( QString goi, _outputCols ) {
 		fp << "\t" << _goiSummary[ goi ].nHIGHDNA;
 	}
 	fp << endl;
+*/
 	fp << "nND";
 	foreach( QString goi, _outputCols ) {
 		fp << "\t" << _goiSummary[ goi ].nND;
@@ -347,6 +349,7 @@ if( cqRNA() == VP::FLAG ) {
 				case	VP::EXPFAIL:
 				case	VP::NOAMP:
 				case	VP::OVERLOD:
+				case	VP::ND:
 					return( V( flagString() ) );
 					break;
 				default:
@@ -365,6 +368,7 @@ if( cqRNA() == VP::FLAG ) {
 				case	VP::EXPFAIL:
 				case	VP::NOAMP:
 				case	VP::OVERLOD:
+				case	VP::ND:
 					return( V( flagString() ) );
 					break;
 				default:
@@ -377,6 +381,7 @@ if( cqRNA() == VP::FLAG ) {
 				case	VP::EXPFAIL:
 				case	VP::NOAMP:
 				case	VP::OVERLOD:
+				case	VP::ND:
 					return( V( flagString() ) );
 					break;
 				default:
@@ -1842,7 +1847,7 @@ void	VPStore::summarizeGoi( GoiSummary *goiSummary )
 	goiSummary->nB = grades.count( VP::FLAG_B );
 	goiSummary->nC = grades.count( VP::FLAG_C );
 	goiSummary->nF = grades.count( VP::FLAG_F );
-	goiSummary->nHIGHDNA = grades.count( VP::FLAG_HIGHDNA );
+	//goiSummary->nHIGHDNA = grades.count( VP::FLAG_HIGHDNA );
 	goiSummary->nND = grades.count( VP::FLAG_ND );
 }
 
@@ -2689,7 +2694,7 @@ void	VPStore::outputFileHeader( QTextStream& fp )
 	fp << "Grade B: " << _gradeB << endl;
 	fp << "Grade C: " << _gradeC << endl;
 
-	fp << "A sample correction performed: ";
+	fp << "Correction performed on A-Samples: ";
 	if( _correctA ) {
 		fp << "true";
 	} else {

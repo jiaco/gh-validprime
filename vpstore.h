@@ -51,7 +51,8 @@ static	void	ShowHeader( QTextStream& fp );
 	LinReg	linReg;
 	int	nAA3, nAA2, nAA, nASTAR,
 		 nA, nB, nC, nF,
-		 nHIGHDNA, nHIGHSD, nND;
+		  nHIGHSD, nND;
+		// nHIGHDNA, nHIGHSD, nND;
 
 	QString		goi;
 	VP::GoiFlag	_flag;
