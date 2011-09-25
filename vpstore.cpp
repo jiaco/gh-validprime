@@ -936,7 +936,7 @@ bool	VPStore::check_0()
 		}
 	}
 	_checkMessage.append( 
-		QString( "%1 cells input, %2 cells over-LOD and %3 cells caused error\n" )
+		QString( "%1 cells input, %2 cells above Cq cutoff and %3 cells caused error\n" )
 		.arg( cellsTotal ).arg( cellsOverlod ).arg( cellsError )
 	);
 	if( cellsError > 0 ) {
@@ -1066,7 +1066,7 @@ bool	VPStore::check_2()
 	pctFail /= _outputRows.size();
 
 	_checkMessage.append(
-	QString( "Set %1 cells to LOD + 1\n" ).arg( nFiction )
+	QString( "Set %1 cells to Cq-cutoff + 1\n" ).arg( nFiction )
 	);
 	_checkMessage.append(
 	QString( "%1% of rows failed check_2 (%2 / %3 valid)\n" )
@@ -2112,7 +2112,7 @@ bool	VPStore::parseFluidigm( const QStringList& lines )
                 }
         }
 	if( nWarn > 0 ) {
-		setWarning( "Fluidigm parser had warnings" );
+		setWarning( "BioMark parser had warnings: check inconsistencies in assay/sample labels" );
 		return( false );
 	}
 	return( true );
@@ -2681,7 +2681,7 @@ void	VPStore::outputFileHeader( QTextStream& fp )
 	}
 	fp << endl;
 
-	fp << "LOD: " << _LOD << endl;
+	fp << "Cq-cutoff: " << _LOD << endl;
 	fp << "DeltaCq Min Count: " << _minSdCount << endl;
 	fp << "DeltaCq AllSD Cutoff: " << _highAllSdCutoff << endl;
 	if( _performLoo ) {
