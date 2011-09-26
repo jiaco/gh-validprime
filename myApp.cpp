@@ -25,8 +25,11 @@ namespace	GH
 	 "diplayName=Demo Format;"
 	 "defaultValue=" % VP::SIMPLE % ";"
 	 );
-	addParam( "load/demo", ParamModel::Action,
-	 "displayName=Load Demo;"
+	addParam( "load/demo1", ParamModel::Action,
+	 "displayName=Small Demo;"
+	 );
+	addParam( "load/demo2", ParamModel::Action,
+	 "displayName=BioMark Demo;"
 	 );
 	addParam( "load/file", ParamModel::File,
 	 "displayName=Input File;"
@@ -44,6 +47,13 @@ namespace	GH
 	 "whatsThis=For a description of the possible input formats"
 	 " please see the Help;"
 	);
+	addParam( "load/autoparse", ParamModel::Boolean,
+	 "displayName=Auto find VPA/gDNA;"
+	 "defaultValue=false;"
+	 "toolTip=Select this if 1 column contains 'VPA' and rows contain 'gDNA';"
+	 "whatsThis=The program can find the VPA column if only one column label contains the text 'VAP and can find the gDNA rows(s) provided the text gDNA is present in each appropriate row;"
+	);
+	
 	addParam( "load/configurestepone", ParamModel::Action,
 	 "displayName=Configure StepOne;" );
 
@@ -92,7 +102,7 @@ namespace	GH
 	 );
 
 	addParam( "check/gdnarows", ParamModel::Choice | ParamModel::Selector,
-	 "displayName=" % tr( "gDNA Samples" )  % ";"
+	 "displayName=" % tr( "gDNA Sample(s)s" )  % ";"
 	 "toolTip=Click Browse to select the rows containing gDNA;"
 	 "whatsThis=Once input has been loaded, the Browse button will popup"
 	 " a selector widget to enable you to select gDNA row(s) from all"
@@ -337,7 +347,42 @@ namespace	GH
 	);
 
 	_isGui = !checkArgs();
+
+	loadParamHelp( ":/tooltips.txt" );
 }
+/*
+void	MyApp::loadParamHelp( const QString& path )
+{
+	Ifp	fp;
+	QString	line;
+	QString	pname, tooltip, whatsthis;
+
+	pname = tooltip = whatsthis = "";
+
+	if( !fp.open( path ) ) {
+		return;
+	}
+	while( nextLine( fp, line ) ) {
+		if( line.isEmpty() && !pname.isEmpty() ) {
+			setParamHelp( pname, tooltip, whatsthis );
+			pname = tooltip = whatsthis = "";
+		} else if( pname.isEmpty() ) {
+			int x = line.indexOf( ' ' );
+			pname = line.left( x );
+			tooltip = line.mid( x + 1 );
+		} else if( whatsthis.isEmpty() ) {
+			whatsthis = line.trimmed();
+		} else {
+			whatsthis += QString( " %1" ).arg( line.trimmed() );
+		}
+	}
+	if( !pname.isEmpty() ) {
+		setParamHelp( pname, tooltip, whatsthis );
+	}
+	fp.close();
+	return;
+}
+*/
 void	MyApp::prepareHeatMap()
 {
 	store.preheatmap( this );
@@ -508,6 +553,20 @@ bool	MyApp::loadDemo()
 	}
 	return( true );
 }
+bool	MyApp::loadDemo1()
+{
+	setParamValue( "load/file", ":/demo1.txt" );
+	setParamValue( "load/format", VP::SIMPLE );
+	setParamValue( "load/autoparse", true );
+	return( load() );
+}
+bool	MyApp::loadDemo2()
+{
+	setParamValue( "load/file", ":/demo2.txt" );
+	setParamValue( "load/format", VP::FLUID );
+	setParamValue( "load/autoparse", true );
+	return( load() );
+}
 bool	MyApp::load()
 {
 	bool	rv = true;
@@ -522,6 +581,38 @@ bool	MyApp::load()
 		emit( emitError( error() ) );
 	}
 	if( rv ) {
+		if( APP_B( "load/autoparse" ) ) {
+			QString vpaCol = "";
+			QStringList gdnaRow;
+			foreach( QString s, store.inputCols() ) {
+				if( !s.contains( "VPA",
+				 Qt::CaseInsensitive ) ) {
+					continue;
+				}
+				if( !vpaCol.isEmpty() ) {
+					setError( Warning( "Multiple columns contain 'VPA' text" ) );
+					break;
+				} else {
+					vpaCol = s;
+				}
+			}
+			foreach( QString s, store.inputRows() ) {
+				if( s.contains( "gDNA",
+				 Qt::CaseInsensitive ) ) {
+					gdnaRow << s;
+				}
+			}
+			if( vpaCol.isEmpty() ) {
+				setError( Warning( "No VPA column found" ) );
+				return( false );
+			}
+			if( gdnaRow.isEmpty() ) {
+				setError( Warning( "No gDNA row(s) found" ) );
+				return( false );
+			}
+			setParamValue( "check/vpacol", vpaCol );
+			setParamValue( "check/gdnarows", gdnaRow );
+		}
 		emit( setState( VP::Check ) );
 	}
 	return( true );
@@ -595,7 +686,7 @@ void	MyApp::writeData( QTextStream& fp, VP::DataRole& role, const bool& includeH
 	}
 	if( role == VP::InOut ) {
 		// TODO WARN this was a change made with HL in office
-		fp << "SECTION\t" << "CqNA/Input" << endl;
+		fp << "SECTION\t" << "CqNA (Input)" << endl;
 	} else {
 		fp << "SECTION\t" << RoleString( role ) << endl;
 	}
@@ -633,10 +724,10 @@ bool	MyApp::save()
 				role = VP::InOut;
 				writeData( fp, role, true );
 				fp << endl;
-				fp << "SECTION\t" << "GoiSummary Summary" << endl;
+				fp << "SECTION\t" << "Goi Summary Summary" << endl;
 				store.showGoiSummarySummary( fp );
 				fp << endl;
-				fp << "SECTION\t" << "GoiSummary" << endl;
+				fp << "SECTION\t" << "Goi Summary" << endl;
 				store.showGoiSummaryTransposed( fp );
 				fp << endl;
 				role = VP::CqRna;

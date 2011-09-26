@@ -40,7 +40,15 @@ It is possible to evaluate this parameter in the ValidPrime software
 
 <h3>ValidPrime consists of 4 steps that must be followed in order:</h3>
 <p>
-The order is shown in the top toolbar, Load -> Check -> Run -> Save Files.
+The order is shown in the top toolbar,
+<a href="#load">Load</a>
+ -> 
+<a href="#check">Check</a>
+ -> 
+<a href="#run">Run</a>
+ -> 
+<a href="#save">Save</a> Files
+.
 </p>
 <p>
 Elements of the interface that are not a part of the current step will be
@@ -61,7 +69,7 @@ at http://code.google.com/p/gh-validprime/downloads/list.
 </p>
 
 
-<h2>Loading Input</h2>
+<h2><a name="load">Loading Input</a></h2>
 <p>
 Input files must be in Stepone or BioMark/heatmap format
 (currently heatmap format needs to be tab-delimited text (.txt) files
@@ -91,7 +99,7 @@ For now, ValidPrime may or may not work on your file.
 This will be fixed by the 1.0.1 release.
 </p>
 
-<h2>Checking Input/Parameters</h2>
+<h2><a name="check">Checking Input/Parameters</a></h2>
 <p>
 The Validate Assays checkbox should only be checked if you are testing
 your qPCR primers for the first time with ValidPrime.
@@ -257,16 +265,31 @@ dilution series get a higher confidence score than an assay that is tested
 on only one gDNA concentration.
 The following weight matrix is used to define the Confidence Score.
 </p>
-<pre>
-Flag		Score
-NOAMP : 	2 points
-LOWSIGNAL	1 point  
-EXPFAIL	0 point
-CALC		-1 point
-</pre>
+<table>
+<tr>
+<td>Flag</td>
+<td>Score</td>
+</tr>
+<tr>
+<td>NOAMP</td>
+<td>2 points</td>
+</tr>
+<tr>
+<td>LOWSIGNAL</td>
+<td>1 point</td>
+</tr>
+<tr>  
+<td>EXPFAIL</td>
+<td>0 point</td>
+</tr>
+<tr>
+<td>CALC</td>
+<td>-1 point</td>
+</tr>
+</table>
 <p>
 The minimal score for an A+++ assay is 8 points,
-A++: 5 points and A+ 2 points.
+A++ 5 points and A+ 2 points.
 To minimize the risk of false positives in designation of gDNA-insensitive
 A+ assays, ValidPrime gives only 1 point a to NOAMP results
 in gDNA samples with less than 20 genome copies. 
@@ -282,13 +305,13 @@ ValidPrime will add one Cq to the Cq cutoff value and use this
 in the calculations. These samples are labelled A*.
 </p>
 
-<h2>Run ValidPrime </h2>
+<h2><a name="run">Run ValidPrime</a></h2>
 <p>
 If Check was successful, the Run button will become enabled
 and you can run ValidPrime.
 </p>
 
-<h2>Viewing and Saving Results</h2>
+<h2><a name="save">Viewing and Saving Results</a></h2>
 <p>
 In the Output sheet, the desired localization for saved result files 
 is chosen with the output folder button. The Generate Output Names 

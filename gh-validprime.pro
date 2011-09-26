@@ -5,6 +5,7 @@ CONFIG += gh gui
 
 RESOURCES +=\
 	resources/help.qrc	\
+	resources/tooltips.qrc	\
 	resources/demo.qrc	\
 
 HEADERS +=\

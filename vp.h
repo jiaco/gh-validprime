@@ -69,7 +69,7 @@ namespace	VP
 		High, Low, NotUsed
 		//High, Med, Low, NotUsed
 	};
-	const QString	FLUID = "Biomark";
+	const QString	FLUID = "BioMark";
 	const QString	SIMPLE = "Spreadsheet";
 	const QString	STEPONE = "Abi-StepOne";
 	const QString	CUSTOM = "Custom";

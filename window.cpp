@@ -59,6 +59,20 @@ namespace	GH
 	connect( _myApp, SIGNAL( setState( VP::State ) ),
 	 this, SLOT( setState( VP::State ) ) );
 
+	// TODO still want to test if this can be made more
+	// generic using ParamView and then app can
+	// provide a QStringList of paramnames that
+	// should get connected to widgetStateCheck()
+	connect( GetParam<ChoiceView>( this, "load/format" ),
+	 SIGNAL( changed(QVariant) ), this,
+	 SLOT( widgetStateCheck(QVariant) ) );
+
+	connect( GetParam<BooleanView>( this, "check/performloo" ),
+	 SIGNAL( changed(QVariant) ), this,
+	 SLOT( widgetStateCheck(QVariant) ) );
+
+	widgetStateCheck( QVariant() );
+
 	// from GH::MainWindow
 
 /*
@@ -73,6 +87,16 @@ namespace	GH
 	//initLogWidget( Qt::Window );
 	//logWidget()->show();
 	//showMessage( Info( "DEBUG ON" ) );
+}
+void	Window::widgetStateCheck( const QVariant& value )
+{
+	Q_UNUSED( value );
+
+	SetEnabled<ActionView>( this, "load/configurestepone", 
+	APP_S( "load/format" ) == VP::STEPONE );
+qDebug() << "DEBUG " << APP_B( "check/performloo" );
+	SetEnabled<ParamView>( this, "check/highloosdcutoff",
+	 APP_B( "check/performloo" ) );
 }
 void	Window::centralGridClicked(
 	 const QVariant& row, const QVariant& column )
@@ -151,6 +175,7 @@ void	Window::setState( const VP::State& state )
 			break;
 	}
 	_state = state;
+	widgetStateCheck( QVariant() );
 }
 void	Window::getUserStepOne()
 {
@@ -281,8 +306,12 @@ void	Window::setupActionToolBar()
 void	Window::setupMenu()
 {
 	_fileMenu = menuBar()->addMenu( tr( "File" ) );
-	_fileMenu->addAction( ActionView::Action( this, "load/demo" ) );
-	//_fileMenu->addAction( ActionView::Action( this, "load/file" ) );
+	QMenu	*demoMenu = new QMenu( "Demos", this );
+	demoMenu->addAction( ActionView::Action( this, "load/demo1" ) );
+	demoMenu->addAction( ActionView::Action( this, "load/demo2" ) );
+	_fileMenu->addMenu( demoMenu );
+
+	_fileMenu->addAction( FileView::Action( this, "load/file" ) );
 
 	_viewMenu = menuBar()->addMenu( tr( "View" ) );
 	_viewMenu->addAction( ActionView::Action( this, "view/cqrna" ) );
@@ -297,7 +326,9 @@ void	Window::configureParams()
 {
 	//	ACTIONS
 	//
-	ActionView::AddListener( this, "load/demo", _myApp, SLOT( loadDemo() ) );
+	ActionView::AddListener( this, "load/demo1", _myApp, SLOT( loadDemo1() ) );
+	ActionView::AddListener( this, "load/demo2", _myApp, SLOT( loadDemo2() ) );
+	//ActionView::AddListener( this, "load/demo", _myApp, SLOT( loadDemo() ) );
 	ActionView::AddListener( this, "load/configurestepone",
 	  this, SLOT( getUserStepOne() ) );
 	ActionView::AddListener( this, "load", _myApp, SLOT( load() ) );

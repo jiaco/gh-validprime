@@ -1,6 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
         <file>sample1.txt</file>
+        <file>demo1.txt</file>
+        <file>demo2.txt</file>
 </qresource>
 </RCC>
 

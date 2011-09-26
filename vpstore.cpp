@@ -106,7 +106,7 @@ void	VPStore::showGoiSummaryTransposed( QTextStream& fp )
 	}
 	fp << endl;
 
-	fp << "GoiFlag";
+	fp << "GOI Flag";
 	foreach( QString goi, _outputCols ) {
 		fp << "\t" << GoiFlagString( _goiSummary[ goi ]._flag );
 	}
@@ -117,12 +117,12 @@ void	VPStore::showGoiSummaryTransposed( QTextStream& fp )
 		fp << "\t" << ConfidenceString( _goiSummary[ goi ].confidence );
 	}
 	fp << endl;
-	fp << "allSd";
+	fp << "All-SD";
 	foreach( QString goi, _outputCols ) {
 		fp << "\t" << _goiSummary[ goi ].allSd;
 	}
 	fp << endl;
-	fp << "looSd";
+	fp << "LOO-SD";
 	foreach( QString goi, _outputCols ) {
 		fp << "\t" << _goiSummary[ goi ].looSd;
 	}
@@ -172,13 +172,6 @@ void	VPStore::showGoiSummaryTransposed( QTextStream& fp )
 		fp << "\t" << _goiSummary[ goi ].nF;
 	}
 	fp << endl;
-/*
-	fp << "nHIGHDNA";
-	foreach( QString goi, _outputCols ) {
-		fp << "\t" << _goiSummary[ goi ].nHIGHDNA;
-	}
-	fp << endl;
-*/
 	fp << "nND";
 	foreach( QString goi, _outputCols ) {
 		fp << "\t" << _goiSummary[ goi ].nND;
@@ -228,12 +221,13 @@ void	VPStore::showGoiSummarySummary( QTextStream& fp )
 		}
 	}
 	fp << "GOI-Total\t" << _goiSummary.keys().size() << endl;
+	fp << "gDNA insensitive assays" << endl;
 	fp << "A+++\t" << aplus3.size() << "\t" << aplus3.join( "," ) << endl;
 	fp << "A++\t" << aplus2.size() << "\t" << aplus2.join( "," ) << endl;
 	fp << "A+\t" << aplus.size() << "\t" << aplus.join( "," ) << endl;
+	fp << "gDNA sensitive assays" << endl;
 	fp << "HighSD\t" << highsd.size() << "\t" << highsd.join( "," ) << endl;
 	fp << "HighConfidence\t" << high.size() << "\t" << high.join( "," ) << endl;
-	//fp << "MedConfidence\t" << med.size() << "\t" << med.join( "," ) << endl;
 	fp << "LowConfidence\t" << low.size() << "\t" << low.join( "," ) << endl;
 }
 	CalcReport::CalcReport()
@@ -587,8 +581,6 @@ bool	VPStore::preload( CliApp* app )
 
 	_inputFile = APP_S( "load/file" );
 	_inputFormat = APP_S( "load/format" );
-	//_inputFile = S( app->param( "load/file" )->value() );
-	//_inputFormat = S( app->param( "load/format" )->value() );
 	return( true );
 }
 	//	precheck is also called by gDnaReady()

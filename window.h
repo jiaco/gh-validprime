@@ -22,6 +22,7 @@ public slots:
 	void	setState( const VP::State& state );
 	void	centralGridClicked( const QVariant& row, const QVariant& column );
 
+	void	widgetStateCheck( const QVariant& value );
 	void	getUserConc();
 	void	getUserStepOne();
 

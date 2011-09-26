@@ -48,6 +48,8 @@ public slots:
 	void	doit();
 	bool	load();
 	bool	loadDemo();
+	bool	loadDemo1();
+	bool	loadDemo2();
 	bool	check();
 	bool	run();
 	bool	save();
