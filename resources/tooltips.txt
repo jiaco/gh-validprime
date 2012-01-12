@@ -1,5 +1,81 @@
-load/file 
-ARG ARG ARG
+load/file Text file (.txt) with qPCR data
+Input file must be text and formatted
+according to the specification detailed in the Help
 
-load/autoparse heheh heheh
-nobday cares
+load/format Specify the format of the input file
+For a description of the possible input formats,
+please see the Help section
+
+check/validate Only check this if you have 4 or more gDNA samples
+It is highly recommended to perform this test when a GOI assay is used for the first time with ValidPrime. This validation serves 2 purposes: 1) assays that are designed to be gDNA-insensitive are tested against different concentrations of gDNA. The absence of amplification validates these assays as gDNA-insensitive or A+ assays (see Help section for details). 2) A gDNA dilution series allow verifying that gDNA-sensitive assays amplify gDNA with an efficiency similar to that of the VPA, else the accuracy of CqRNA calculation might be compromised. ValidPrime assay validation is used to verify that GOI assays behave as expected when gDNA is used as template in the PCR, but it does not replace the criteria for assay validation as defined by the MIQE guidelines.
+
+check/lod Cutoff above which Cq values will be flagged LOWSIGNAL
+High Cq values can be filtered out by setting this value. Data points above the threshold will be flagged LOWSIGNAL in output.
+
+check/failflag User defined string that will mark a cell as EXPFAIL
+Possibility for personalized flagging of individual cells in which a signal was detected but the quality of the amplification was considered as insufficient (EXPerimental FAIL). When the input data is in BioMark heatmap format and “quality result” data is present in the file, ValidPrime will automatically apply this flag to data with a Cq value (below Cq cut-off, if this filter is used) and “Fail” in corresponding cell “quality result” grid under the Cq grid.
+
+check/noampflag User defined string for cells with no amplification detected
+Possibility for personalized flagging of individual cells in which no amplification was detected. In the Biomark (heatmap) output, this will be applied to cells with a Cq value of ‘999’.
+
+check/vpacol Click Browse to select the column for the VPA
+Once input has been loaded, the Browse button will popup
+a selector widget to enable you to select the VPA among all assay
+column headings found in the input file.
+Tip: Typing the first letter of the VPA name will speed up the selection procedure.
+
+check/gdnarows Click Browse to select the row(s) containing gDNA
+Once input has been loaded, the Browse button will popup
+a selector widget to enable you to select gDNA row(s) from all
+row headings found in the input file.
+
+check/parseconc Should the program look in the row strings for numeric concentrations?
+If you label your gDNA rows with numeric values for each gDNA concentration
+then the program can automatically parse them. Check the values with the button below
+to be sure they were parsed correctly.
+
+check/gdnaconc Use this button to check and/or set gDNA concentration values
+Triggers a popup widget to check/set gDNA concentrations.
+If the program parsed gDNA concentrations from the row labels,
+then you can check those values in the popup widget.
+If your row labels do not contain numeric values, you can enter them in the widget.
+
+check/ignorecols Select any columns that should be ignored
+
+check/ignorerows Select any rows that should be ignored
+
+check/minsdcount Set the minimum number of values required for SD calculations for High-Confidence evaluation
+Standard Deviations will only be calculated provided there are
+at least a minimum number of values (default=4). The SD calculation is used by the default method to define High-confidence assays (see Help section).
+
+check/highallsdcutoff Set threshold for High confidence test when all gDNA concentrations are taken into account for SD determination
+The Standard Deviation of the delta Cq [gDNA(GOI)-gDNA(VPA)]  calculations, including all gDNA concentrations, will be compared against this value
+in order to determine whether or not the GOI assay is passes the High-Confidence criteria.
+
+check/performloo Allows to Leave-One-Out, referring to gDNA concentrations,to exclude a potential outlier if 5 or more than gDNA concentrations are included in the experiment
+In case 5 or more than gDNA concentrations are included in the experiment, ValidPrime can test whether one of these behaves aberrantly. If activated both All-SD and LOO-SD will be reported in the GOI summary output. The LOO option is not activated by default.
+
+check/highloosdcutoff Upper SD Cutoff for high confidence gDNA-sensitive assays when LOO is activated
+In case LOO is performed, this limit designate the maximal standard deviation of the delta Cq [gDNA(GOI)-gDNA(VPA)] when one concentration in the dilution series is excluded. Default Cutoff is 0.2.
+
+run/gradea Max %DNA allowed for Grade-A samples; See What’sThis or Help section for details
+Max %DNA allowed for Grade-A samples. %DNA is defined as the perentage of the gDNA-derived contribution of the total signal expressed in relative quantities: %DNA = (2-CqDNA / 2-CqNA) *100”. Grade-A Cq values will not be corrected by default since the gDNA contribution is less than 3%.
+
+
+run/gradeb Max %DNA allowed for Grade-B samples; See What’sThis or Help section for details
+Max %DNA allowed for Grade-B samples. %DNA is defined as the perentage of the gDNA-derived contribution of the total signal expressed in relative quantities: %DNA = (2-CqDNA / 2-CqNA) *100”. CqRNA for Grade-B samples will be calculated given that 1) All-SD is below cutoff or 2) The option“Validate assays” has been deactivated allowing CqRNA calculation of previously validated assays using fewer gDNA samples. Default value: 25.
+
+run/gradec Max %DNA allowed for Grade-C samples; See What’sThis or Help section for details
+Max %DNA tolerated for Grade-C samples. %DNA is defined as the perentage of the gDNA-derived contribution of the total signal expressed in relative quantities: %DNA = (2-CqDNA / 2-CqNA) *100”. CqRNA for Grade-C samples will be calculated given that 1) All-SD is below cutoff or 2) The option“Validate assays” has been deactivated allowing CqRNA calculation of previously validated assays using fewer gDNA samples. Default value: 60”. Samples with %DNA above Grade C Max will not be corrected but be flagged HIGHDNA in CqRNA output and given the grade F.
+
+run/correcta Option allowing the calculation of Grade-A CqRNA values
+Option allowing the calculation of Grade-A CqRNA values. In Grade-A samples, the gDNA contribution (%DNA) is estimated to be less than 3% which is negligible in qPCR. CqRNA calculation of Grade A samples is thus not necessary.
+
+save/autoname Use the output folder plus the input file name to auto-create output file names
+Using the file name of the input file and the output folder, the program
+will automatically generate all file names for the various output files; Output files will be saved in .txt format. Please note that the program will overwrite existing files with identical names without warning!
+
+load Load the current input file after having chosen the appropriate input file format
+Load is the first step of the workflow and uses a parser
+select by the Format selector and the specified input file.
+

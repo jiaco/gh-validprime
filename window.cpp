@@ -94,7 +94,6 @@ void	Window::widgetStateCheck( const QVariant& value )
 
 	SetEnabled<ActionView>( this, "load/configurestepone", 
 	APP_S( "load/format" ) == VP::STEPONE );
-qDebug() << "DEBUG " << APP_B( "check/performloo" );
 	SetEnabled<ParamView>( this, "check/highloosdcutoff",
 	 APP_B( "check/performloo" ) );
 }
